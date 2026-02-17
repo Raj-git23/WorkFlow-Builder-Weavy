@@ -4,7 +4,6 @@ import { MousePointer2, Hand, Undo2, Redo2, ChevronDown } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
 import { useViewport, useReactFlow } from "@xyflow/react";
 import { cn } from "@/lib/utils";
-import { ToolMode } from "@/types/nodetype";
 import { ZOOM_OPTIONS } from "@/lib/assets";
 import { BottomControlsProps } from "@/types/filetypes";
 

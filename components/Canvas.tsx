@@ -39,15 +39,15 @@ export function Canvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
-  const [past,   setPast]   = useState<Snapshot[]>([]);
+  const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
 
-  const isRestoringRef     = useRef(false);
-  const nodesRef           = useRef(nodes);
-  const edgesRef           = useRef(edges);
-  const historyTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isRestoringRef = useRef(false);
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+  const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSnapshotRef = useRef<Snapshot | null>(null);
-  const dragTypeRef        = useRef<NodeType | null>(null);
+  const dragTypeRef = useRef<NodeType | null>(null);
 
   const syncEdges = useFlowStore((s) => s.setEdges);
 
@@ -55,8 +55,8 @@ export function Canvas() {
   useEffect(() => { edgesRef.current = edges; }, [edges]);
   useEffect(() => { syncEdges(edges); }, [edges, syncEdges]);
 
-  // ── History ────────────────────────────────────────────────────────────────
 
+  // Manual creation of React Flow functions
   const scheduleHistoryPush = useCallback(() => {
     if (isRestoringRef.current) return;
     if (!pendingSnapshotRef.current) {
@@ -93,16 +93,16 @@ export function Canvas() {
     [setEdges, pushNow]
   );
 
-  // When a node is deleted, reconnect its incomers to its outgoers (like the RF example)
+  // When a node is deleted, reconnect its incomers to its outgoers
   const onNodesDelete = useCallback(
     (deleted: Node[]) => {
       setEdges((eds) =>
         deleted.reduce((acc, node) => {
-          const incomers       = getIncomers(node, nodesRef.current, acc);
-          const outgoers       = getOutgoers(node, nodesRef.current, acc);
+          const incomers = getIncomers(node, nodesRef.current, acc);
+          const outgoers = getOutgoers(node, nodesRef.current, acc);
           const connectedEdges = getConnectedEdges([node], acc);
-          const remaining      = acc.filter((e) => !connectedEdges.includes(e));
-          const bridged        = incomers.flatMap(({ id: source }) =>
+          const remaining = acc.filter((e) => !connectedEdges.includes(e));
+          const bridged = incomers.flatMap(({ id: source }) =>
             outgoers.map(({ id: target }) => ({ id: `${source}->${target}`, source, target }))
           );
           return [...remaining, ...bridged];
@@ -134,13 +134,12 @@ export function Canvas() {
     setTimeout(() => { isRestoringRef.current = false; }, 0);
   }, [future, setNodes, setEdges]);
 
-  // ── Node spawning ──────────────────────────────────────────────────────────
 
   const spawnNode = useCallback(
     (type: NodeType, position: { x: number; y: number }, data?: Record<string, unknown>) => {
       pushNow();
       const newNode: Node = {
-        id:   genId(type),
+        id: genId(type),
         type,
         position,
         data: { ...(data ?? DEFAULT_DATA[type]) },
@@ -154,7 +153,7 @@ export function Canvas() {
   const handleAddNode = useCallback(
     (type: NodeType) => {
       const position = screenToFlowPosition({
-        x: window.innerWidth  / 2 + Math.random() * 80 - 40,
+        x: window.innerWidth / 2 + Math.random() * 80 - 40,
         y: window.innerHeight / 2 + Math.random() * 80 - 40,
       });
       spawnNode(type, position);
@@ -162,7 +161,6 @@ export function Canvas() {
     [screenToFlowPosition, spawnNode]
   );
 
-  // ── Node actions (wired into NodeShell via context) ────────────────────────
 
   const duplicateNode = useCallback(
     (id: string) => {
@@ -186,7 +184,6 @@ export function Canvas() {
     [setNodes, setEdges, pushNow]
   );
 
-  // ── Drag & drop ────────────────────────────────────────────────────────────
 
   const handleDragStart = useCallback((e: React.DragEvent, type: NodeType) => {
     dragTypeRef.current = type;

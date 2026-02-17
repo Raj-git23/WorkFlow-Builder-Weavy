@@ -1,13 +1,13 @@
 import { NodeType } from "@/types/nodetype";
 import React from "react";
 import {
-    Crop,
-    Film,
-    ImageUp,
-    Sparkles,
-    SquarePlay,
-    TypeOutline,
-  } from "lucide-react";
+  Crop,
+  Film,
+  ImageUp,
+  Sparkles,
+  SquarePlay,
+  TypeOutline,
+} from "lucide-react";
 
 export const ZOOM_OPTIONS = [10, 25, 50, 75, 100, 125, 150, 200];
 
@@ -39,21 +39,21 @@ export const ACCEPT = {
 };
 
 export const DEFAULT_DATA: Record<NodeType, Record<string, unknown>> = {
-  textArea:     { value: "" },
-  uploadImage:  { fileType: "image" },
-  uploadVideo:  { fileType: "video" },
-  llm:          { model: "gpt-4o", imageInputCount: 1 },
-  cropImage:    { aspectRatio: "Custom", width: 1024, height: 1024 },
+  textArea: { value: "" },
+  uploadImage: { fileType: "image" },
+  uploadVideo: { fileType: "video" },
+  llm: { model: "gpt-4o", imageInputCount: 1 },
+  cropImage: { aspectRatio: "Custom", width: 1024, height: 1024 },
   extractFrame: { frame: 0 },
 };
 
 // Map aspect ratio string to numeric value
 export const ASPECT_MAP: Record<string, number | undefined> = {
-  "1:1":   1,
-  "4:3":   4 / 3,
-  "16:9":  16 / 9,
-  "3:2":   3 / 2,
-  "9:16":  9 / 16,
-  "2:3":   2 / 3,
-  Custom:  undefined,
+  "1:1": 1,
+  "4:3": 4 / 3,
+  "16:9": 16 / 9,
+  "3:2": 3 / 2,
+  "9:16": 9 / 16,
+  "2:3": 2 / 3,
+  Custom: undefined,
 };

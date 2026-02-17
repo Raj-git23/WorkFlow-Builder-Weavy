@@ -1,4 +1,3 @@
-// store/useFlowStore.ts
 import { create } from "zustand";
 import { type Edge } from "@xyflow/react";
 
@@ -13,8 +12,6 @@ interface FlowStore {
   edges: Edge[];
   setOutput: (nodeId: string, output: NodeOutput) => void;  
   setEdges: (edges: Edge[]) => void;
-
-  // Selector-friendly — returns a stable reference when nothing changed.
   getInput: (targetNodeId: string, handleId: string) => NodeOutput | null;     // Returns the source node's output for a specific target handle.
 }
 
@@ -42,7 +39,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
 }));
 
 
-// ─── Targeted selector hooks ──────────────────────────────────────────────────
+// Targeted selector hooks
 // Each node uses one of these instead of calling getInput() inside render.
 // Zustand only re-renders the subscriber when the specific slice changes.
 

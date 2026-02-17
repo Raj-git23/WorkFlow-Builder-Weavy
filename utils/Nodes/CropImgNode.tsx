@@ -138,8 +138,6 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
                 {[
                   { label: "X", value: x, set: setX },
                   { label: "Y", value: y, set: setY },
-                  // { label: "W", value: width, set: handleWidthChange },
-                  // { label: "H", value: height, set: handleHeightChange },
                 ].map(({ label, value, set }) => (
                   <div key={label} className="flex items-center w-full gap-2">
                     <span className="text-sidebar-foreground/40 text-[10px]">{label}</span>
@@ -155,8 +153,6 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
 
               <div className="flex justify-center w-full gap-2">
                 {[
-                  // { label: "X", value: x, set: setX },
-                  // { label: "Y", value: y, set: setY },
                   { label: "W", value: width, set: handleWidthChange },
                   { label: "H", value: height, set: handleHeightChange },
                 ].map(({ label, value, set }) => (
@@ -176,11 +172,11 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
               </div>
             </div>
             
+            {/* Error */}
             {error && <p className="text-[11px] text-red-400">{error}</p>}
 
           </div>
 
-          {/* Error */}
 
           {/* Run button */}
           <Button variant="outline" size="sm" onClick={runCrop}

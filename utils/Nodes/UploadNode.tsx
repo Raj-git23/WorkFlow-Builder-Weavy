@@ -31,7 +31,7 @@ function UploadContent({
 
   const isUploading = status === "uploading";
 
-  // After a successful upload, publish the URL to the store so downstream nodes (crop, extractFrame, llm) can read it via edges.
+  // After a successful upload, publishing the URL to the store so downstream nodes (crop, extractFrame, llm) can read it via edges.
   const publishUrl = useCallback((url: string) => {
     setPreviewUrl(url);
     setOutput(nodeId, fileType === "image" ? { imageUrl: url } : { videoUrl: url });

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     const result = await transloadit.createAssembly({
       files: {
-        file: tmpPath,          // ← plain string path
+        file: tmpPath,          // plain string path
       },
       params: {
         template_id: TEMPLATES[fileType as keyof typeof TEMPLATES] ?? TEMPLATES.image,
@@ -60,7 +60,8 @@ export async function POST(req: NextRequest) {
     console.error("Transloadit error:", err);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   } finally {
-    // Always clean up the temp file
+
+    // clean up the temp file
     if (tmpPath) await unlink(tmpPath).catch(() => {});
   }
 }
