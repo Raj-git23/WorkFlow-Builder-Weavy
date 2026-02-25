@@ -53,12 +53,12 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
     {
       text: "Prompt", id: `${props.id}-prompt`,
       position: Position.Left, type: "target" as const,
-      style: { top: HANDLE_START_Y },
+      style: { top: HANDLE_START_Y, style: {background: '#f1a0fa'} },
     },
     ...Array.from({ length: imageInputCount }, (_, i) => ({
       text: `Reference Image ${i + 1}`, id: `${props.id}-image-${i}`,
       position: Position.Left, type: "target" as const,
-      style: { top: HANDLE_START_Y + HANDLE_SPACING * (i + 1) },
+      style: { top: HANDLE_START_Y + HANDLE_SPACING * (i + 1), style: {background: '#45a08a'} },
     })),
     {
       text: "Result", id: `${props.id}-result`,

@@ -18,17 +18,22 @@ import {
   getIncomers,
   getOutgoers,
   getConnectedEdges,
+  reconnectEdge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { nodeTypes } from "@/types/allnode";
-import { NodeActionsContext, NodeType, Snapshot, ToolMode } from "@/types/nodetype";
+import {
+  NodeActionsContext,
+  NodeType,
+  Snapshot,
+  ToolMode,
+} from "@/types/nodetype";
 import LeftSidebar from "@/components/LeftSidebar";
 import { BottomControls } from "@/components/BottomControls";
 import { useFlowStore } from "@/store/useflowstore";
 import { genId, takeSnapshot } from "@/lib/helper";
 import { DEFAULT_DATA, MAX_HISTORY } from "@/lib/assets";
-
-
+import { getEdgeStyle } from "@/lib/edge-style";
 
 // ─── Canvas ───────────────────────────────────────────────────────────────────
 
@@ -48,54 +53,98 @@ export function Canvas() {
   const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSnapshotRef = useRef<Snapshot | null>(null);
   const dragTypeRef = useRef<NodeType | null>(null);
+  const edgeReconnectSuccessful = useRef(true);
 
   const syncEdges = useFlowStore((s) => s.setEdges);
 
-  useEffect(() => { nodesRef.current = nodes; }, [nodes]);
-  useEffect(() => { edgesRef.current = edges; }, [edges]);
-  useEffect(() => { syncEdges(edges); }, [edges, syncEdges]);
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
 
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
+
+  useEffect(() => {
+    syncEdges(edges);
+  }, [edges, syncEdges]);
 
   // Manual creation of React Flow functions
   const scheduleHistoryPush = useCallback(() => {
     if (isRestoringRef.current) return;
+
     if (!pendingSnapshotRef.current) {
-      pendingSnapshotRef.current = takeSnapshot(nodesRef.current, edgesRef.current);
+      pendingSnapshotRef.current = takeSnapshot(
+        nodesRef.current,
+        edgesRef.current,
+      );
     }
+
     if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
     historyTimerRef.current = setTimeout(() => {
       const snap = pendingSnapshotRef.current;
       pendingSnapshotRef.current = null;
       historyTimerRef.current = null;
-      if (snap) { setPast((p) => [...p, snap].slice(-MAX_HISTORY)); setFuture([]); }
+
+      if (snap) {
+        setPast((p) => [...p, snap].slice(-MAX_HISTORY));
+        setFuture([]);
+      }
     }, 300);
   }, []);
 
   const pushNow = useCallback(() => {
     if (isRestoringRef.current) return;
-    if (historyTimerRef.current) { clearTimeout(historyTimerRef.current); historyTimerRef.current = null; pendingSnapshotRef.current = null; }
-    setPast((p) => [...p, takeSnapshot(nodesRef.current, edgesRef.current)].slice(-MAX_HISTORY));
+
+    if (historyTimerRef.current) {
+      clearTimeout(historyTimerRef.current);
+      historyTimerRef.current = null;
+      pendingSnapshotRef.current = null;
+    }
+
+    setPast((p) =>
+      [...p, takeSnapshot(nodesRef.current, edgesRef.current)].slice(
+        -MAX_HISTORY,
+      ),
+    );
+
     setFuture([]);
   }, []);
 
   const handleNodesChange = useCallback(
-    (changes: NodeChange[]) => { scheduleHistoryPush(); onNodesChange(changes); },
-    [onNodesChange, scheduleHistoryPush]
+    (changes: NodeChange[]) => {
+      scheduleHistoryPush();
+      onNodesChange(changes);
+    },
+    [onNodesChange, scheduleHistoryPush],
   );
 
   const handleEdgesChange = useCallback(
-    (changes: EdgeChange[]) => { scheduleHistoryPush(); onEdgesChange(changes); },
-    [onEdgesChange, scheduleHistoryPush]
+    (changes: EdgeChange[]) => {
+      scheduleHistoryPush();
+      onEdgesChange(changes);
+    },
+    [onEdgesChange, scheduleHistoryPush],
   );
 
-  const onConnect = useCallback(
-    (connection: Connection) => { pushNow(); setEdges((eds) => addEdge(connection, eds)); },
-    [setEdges, pushNow]
+  const onConnect = useCallback((connection: Connection) => {
+      pushNow();
+      setEdges((eds) => {
+        const sourceNode = nodesRef.current.find((n) => n.id === connection.source);
+        const targetNode = nodesRef.current.find((n) => n.id === connection.target);
+
+        if (!sourceNode || !targetNode) return addEdge(connection, eds);
+
+        const edgeStyle = getEdgeStyle(sourceNode.type as NodeType, targetNode.type as NodeType);
+
+        return addEdge({ ...connection, ...edgeStyle }, eds);
+      });
+    },
+    [setEdges, pushNow],
   );
 
   // When a node is deleted, reconnect its incomers to its outgoers
-  const onNodesDelete = useCallback(
-    (deleted: Node[]) => {
+  const onNodesDelete = useCallback((deleted: Node[]) => {
       setEdges((eds) =>
         deleted.reduce((acc, node) => {
           const incomers = getIncomers(node, nodesRef.current, acc);
@@ -103,13 +152,17 @@ export function Canvas() {
           const connectedEdges = getConnectedEdges([node], acc);
           const remaining = acc.filter((e) => !connectedEdges.includes(e));
           const bridged = incomers.flatMap(({ id: source }) =>
-            outgoers.map(({ id: target }) => ({ id: `${source}->${target}`, source, target }))
+            outgoers.map(({ id: target }) => ({
+              id: `${source}->${target}`,
+              source,
+              target,
+            })),
           );
           return [...remaining, ...bridged];
-        }, eds)
+        }, eds),
       );
     },
-    [setEdges]
+    [setEdges],
   );
 
   const handleUndo = useCallback(() => {
@@ -120,7 +173,9 @@ export function Canvas() {
     setFuture((f) => [...f, takeSnapshot(nodesRef.current, edgesRef.current)]);
     setNodes(prev.nodes);
     setEdges(prev.edges);
-    setTimeout(() => { isRestoringRef.current = false; }, 0);
+    setTimeout(() => {
+      isRestoringRef.current = false;
+    }, 0);
   }, [past, setNodes, setEdges]);
 
   const handleRedo = useCallback(() => {
@@ -131,12 +186,16 @@ export function Canvas() {
     setPast((p) => [...p, takeSnapshot(nodesRef.current, edgesRef.current)]);
     setNodes(next.nodes);
     setEdges(next.edges);
-    setTimeout(() => { isRestoringRef.current = false; }, 0);
+    setTimeout(() => {
+      isRestoringRef.current = false;
+    }, 0);
   }, [future, setNodes, setEdges]);
 
-
-  const spawnNode = useCallback(
-    (type: NodeType, position: { x: number; y: number }, data?: Record<string, unknown>) => {
+  const spawnNode = useCallback((
+      type: NodeType,
+      position: { x: number; y: number },
+      data?: Record<string, unknown>,
+    ) => {
       pushNow();
       const newNode: Node = {
         id: genId(type),
@@ -147,43 +206,38 @@ export function Canvas() {
       setNodes((nds) => [...nds, newNode]);
       return newNode;
     },
-    [setNodes, pushNow]
+    [setNodes, pushNow],
   );
 
-  const handleAddNode = useCallback(
-    (type: NodeType) => {
+  const handleAddNode = useCallback((type: NodeType) => {
       const position = screenToFlowPosition({
         x: window.innerWidth / 2 + Math.random() * 80 - 40,
         y: window.innerHeight / 2 + Math.random() * 80 - 40,
       });
       spawnNode(type, position);
     },
-    [screenToFlowPosition, spawnNode]
+    [screenToFlowPosition, spawnNode],
   );
 
-
-  const duplicateNode = useCallback(
-    (id: string) => {
+  const duplicateNode = useCallback((id: string) => {
       const node = getNode(id);
       if (!node) return;
       spawnNode(
         node.type as NodeType,
         { x: node.position.x + 30, y: node.position.y + 30 },
-        node.data as Record<string, unknown>
+        node.data as Record<string, unknown>,
       );
     },
-    [getNode, spawnNode]
+    [getNode, spawnNode],
   );
 
-  const deleteNode = useCallback(
-    (id: string) => {
+  const deleteNode = useCallback((id: string) => {
       pushNow();
       setNodes((nds) => nds.filter((n) => n.id !== id));
       setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
     },
-    [setNodes, setEdges, pushNow]
+    [setNodes, setEdges, pushNow],
   );
-
 
   const handleDragStart = useCallback((e: React.DragEvent, type: NodeType) => {
     dragTypeRef.current = type;
@@ -191,17 +245,15 @@ export function Canvas() {
     e.dataTransfer.effectAllowed = "move";
   }, []);
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
       e.preventDefault();
-      const type =
-        (e.dataTransfer.getData("application/reactflow-nodetype") as NodeType) ||
-        dragTypeRef.current;
+      const type = (e.dataTransfer.getData("application/reactflow-nodetype",) as NodeType) || dragTypeRef.current;
+      
       if (!type) return;
       dragTypeRef.current = null;
       spawnNode(type, screenToFlowPosition({ x: e.clientX, y: e.clientY }));
     },
-    [screenToFlowPosition, spawnNode]
+    [screenToFlowPosition, spawnNode],
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -209,11 +261,43 @@ export function Canvas() {
     e.dataTransfer.dropEffect = "move";
   }, []);
 
+  const onReconnectStart = useCallback(() => {
+    edgeReconnectSuccessful.current = false;
+  }, []);
+
+  const onReconnect = useCallback((oldEdge: Edge, newConnection: Connection) => {
+      edgeReconnectSuccessful.current = true;
+      setEdges((els) => {
+        const sourceNode = nodesRef.current.find((n) => n.id === newConnection.source);
+        const targetNode = nodesRef.current.find((n) => n.id === newConnection.target);
+  
+        if (!sourceNode || !targetNode) return reconnectEdge(oldEdge, newConnection, els);
+  
+        const edgeStyle = getEdgeStyle(sourceNode.type as NodeType, targetNode.type as NodeType);
+  
+        return reconnectEdge(oldEdge, { ...newConnection, ...edgeStyle }, els);
+      });
+    }, [setEdges],
+  );
+
+  const onReconnectEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge) => {
+      if (!edgeReconnectSuccessful.current) {
+        setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+      }
+
+      edgeReconnectSuccessful.current = true;
+    },
+    [setEdges],
+  );
+
   return (
     <NodeActionsContext.Provider value={{ duplicateNode, deleteNode }}>
       <main>
         <div className="absolute h-full z-10">
-          <LeftSidebar onAddNode={handleAddNode} onDragStart={handleDragStart} />
+          <LeftSidebar
+            onAddNode={handleAddNode}
+            onDragStart={handleDragStart}
+          />
         </div>
 
         <div style={{ height: "100vh", width: "100vw" }}>
@@ -227,6 +311,9 @@ export function Canvas() {
             onNodesDelete={onNodesDelete}
             onEdgesChange={handleEdgesChange}
             onConnect={onConnect}
+            onReconnect={onReconnect}
+            onReconnectStart={onReconnectStart}
+            onReconnectEnd={onReconnectEnd}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             panOnDrag={toolMode === "pan" ? true : [1, 2]}
@@ -246,6 +333,7 @@ export function Canvas() {
                 canRedo={future.length > 0}
               />
             </Panel>
+
             <Background color="#dcd8d8af" bgColor="#0a0a0a" gap={16} />
             <MiniMap
               maskStrokeWidth={2}

@@ -16,7 +16,7 @@ export function TextAreaNode(props: NodeProps<TextAreaRFNode>) {
   }, [props.id, setOutput]);
 
   return (
-    <BaseNode<TextNodeData> {...props} handles={[{ text: "Prompt", position: Position.Right }]}>
+    <BaseNode<TextNodeData> {...props} handles={[{ text: "Prompt", position: Position.Right, style: { background: '#f1a0fa' }}]}>
       {({ id, data }) => (
         <NodeShell title="Prompt" nodeId={props?.id}>
           <Textarea

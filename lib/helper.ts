@@ -34,3 +34,8 @@ export function takeSnapshot(nodes: Node[], edges: Edge[]): Snapshot {
     edges: JSON.parse(JSON.stringify(edges)),
   };
 }
+
+// const handles = [
+//   { text: "File*", id: `${props.id}-file-in`, position: Position.Left, type: "target" as const },
+//   { text: "File", id: FILE_OUT_HANDLE(props.id), position: Position.Right, type: "source" as const },
+// ];

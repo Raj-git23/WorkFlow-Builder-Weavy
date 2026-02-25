@@ -65,8 +65,8 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
   }, [imageUrl, x, y, width, height, props.id, setOutput]);
 
   const handles = [
-    { text: "File*", id: `${props.id}-file-in`, position: Position.Left, type: "target" as const },
-    { text: "File", id: FILE_OUT_HANDLE(props.id), position: Position.Right, type: "source" as const },
+    { text: "File*", id: `${props.id}-file-in`, position: Position.Left, type: "target" as const, style: { background: '#45a08a' } },
+    { text: "File", id: FILE_OUT_HANDLE(props.id), position: Position.Right, type: "source" as const, style: { background: '#45a08a' } },
   ];
 
   return (

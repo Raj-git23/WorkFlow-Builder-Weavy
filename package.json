@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
+    "@clerk/nextjs": "^6.38.2",
     "@trigger.dev/sdk": "4.3.3",
     "@uppy/core": "^5.2.0",
     "@uppy/dashboard": "^5.1.1",

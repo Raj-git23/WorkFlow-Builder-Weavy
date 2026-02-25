@@ -57,8 +57,8 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
   }, [videoUrl, frame, percent, usePercent, props.id, setOutput]);
 
   const handles = [
-    { text: "Video", id: `${props.id}-video-in`, position: Position.Left, type: "target" as const },
-    { text: "Frame", id: FRAME_OUT_HANDLE(props.id), position: Position.Right, type: "source" as const },
+    { text: "Video", id: `${props.id}-video-in`, position: Position.Left, type: "target" as const, style: {background: '#45a08a'} },
+    { text: "Frame", id: FRAME_OUT_HANDLE(props.id), position: Position.Right, type: "source" as const, style: {background: '#45a08a'} },
   ];
 
   return (

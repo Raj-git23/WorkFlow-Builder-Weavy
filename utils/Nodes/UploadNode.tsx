@@ -153,11 +153,13 @@ function UploadContent({
   );
 }
 
+
+
 //  Upload Image Node 
 
 export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
   return (
-    <BaseNode<UploadNodeData> {...props} handles={[{ text: "File", position: Position.Right }]}>
+    <BaseNode<UploadNodeData> {...props} handles={[{ text: "File", position: Position.Right, style: {background: '#ea8362'}}]}>
       {({ id, data }) => (
         <NodeShell title="Upload Image" className={data?.url ? "max-h-full" : "h-96 max-h-full"} nodeId={props?.id}>
           <UploadContent nodeId={id} fileType="image" savedUrl={data.url} />
@@ -171,7 +173,7 @@ export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
 
 export function UploadVideoNode(props: NodeProps<UploadVideoRFNode>) {
   return (
-    <BaseNode<UploadNodeData> {...props} handles={[{ text: "File", position: Position.Right }]}>
+    <BaseNode<UploadNodeData> {...props} handles={[{ text: "File", position: Position.Right, style: {background: '#ea8362'} }]}>
       {({ id, data }) => (
         <NodeShell title="Upload Video" className={data.url ? "max-h-fit" : "h-96 max-h-full"} nodeId={props?.id}>
           <UploadContent nodeId={id} fileType="video" savedUrl={data.url} />

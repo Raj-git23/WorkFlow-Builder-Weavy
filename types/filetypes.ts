@@ -37,6 +37,7 @@ export interface HandleDescriptor {
   text: string;
   id?: string;
   position?: Position;
+  color?: string;
   type?: "source" | "target";
   style?: React.CSSProperties;
 }
@@ -52,6 +53,7 @@ export interface CustomHandleProps {
   id: string;
   active?: boolean;
   text: string;
+  color?: string;
   type: "source" | "target";
   position: Position;
   style?: React.CSSProperties;

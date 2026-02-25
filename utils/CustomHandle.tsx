@@ -4,13 +4,13 @@ import { Handle } from '@xyflow/react'
 import React from 'react'
 
 
-const CustomHandle: React.FC<CustomHandleProps> = ({ id, active, text, type, position, style }) => {
+const CustomHandle: React.FC<CustomHandleProps> = ({ id, active, text, type, position, style, color }) => {
   return (
     <Handle
       type={type}
       position={position}
       id={`handle-${id}`}
-      style={{ background: '#f1a0fa', height: '12px', width: '12px', ...style }}
+      style={{ height: '12px', width: '12px', ...style }}
     >
       <span
         className={cn(

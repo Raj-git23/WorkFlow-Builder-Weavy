@@ -52,6 +52,8 @@
   --font-inter: var(--font-inter);
   --font-robot_mono: var(--font-roboto-mono);
   --font-roboto: var(--font-roboto);
+  --font-dmsans: var(--font-dmsans);
+  --font-dmmono: var(--font-dmmono);
   --color-sidebar-background: var(--sidebar-background);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-textarea-background: var(--textarea-background);

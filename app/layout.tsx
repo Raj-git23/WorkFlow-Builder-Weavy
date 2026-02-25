@@ -1,37 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Roboto, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ClerkProvider, RedirectToSignIn, SignedIn, SignedOut } from '@clerk/nextjs'
+import { dmMono, dmSans, geistMono, geistSans, inter, roboto, roboto_mono } from "@/lib/font-styles";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: "--font-inter"
-});
- 
-export const roboto_mono = Roboto_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['400', '700'],
-  variable: "--font-roboto"
-});
-
-export const roboto = Roboto({
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['400', '700'],
-  variable: "--font-roboto"
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -44,12 +17,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} font-inter ${geistMono.variable} ${inter.variable} ${roboto_mono.variable} ${roboto.variable} antialiased`}
-      >
-        <TooltipProvider>{children}</TooltipProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} font-inter ${dmMono.variable} ${dmSans.variable}  ${geistMono.variable} ${inter.variable} ${roboto_mono.variable} ${roboto.variable} antialiased`}
+        >
+          <SignedIn>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+          </SignedIn>
+
+          <SignedOut>
+            <RedirectToSignIn />
+          </SignedOut>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
