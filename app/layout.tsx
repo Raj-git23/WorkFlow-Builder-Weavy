@@ -3,6 +3,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClerkProvider, RedirectToSignIn, SignedIn, SignedOut } from '@clerk/nextjs'
 import { dmMono, dmSans, geistMono, geistSans, inter, roboto, roboto_mono } from "@/lib/font-styles";
+import { Toaster } from "sonner";
 
 
 
@@ -25,6 +26,7 @@ export default function RootLayout({
           <SignedIn>
             <TooltipProvider>
               {children}
+              <Toaster />
             </TooltipProvider>
           </SignedIn>
 

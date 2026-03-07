@@ -35,6 +35,15 @@ export function takeSnapshot(nodes: Node[], edges: Edge[]): Snapshot {
   };
 }
 
+// Convert aspect ratio string to number (e.g., "16:9" → 16/9)
+export function parseAspectRatio(ratio: string): number | undefined {
+  if (ratio === "Custom") return undefined;
+  const [w, h] = ratio.split(":").map(Number);
+  return w && h ? w / h : undefined;
+}
+
+export const round = (val: number) => Math.round(val * 100) / 100;
+
 // const handles = [
 //   { text: "File*", id: `${props.id}-file-in`, position: Position.Left, type: "target" as const },
 //   { text: "File", id: FILE_OUT_HANDLE(props.id), position: Position.Right, type: "source" as const },

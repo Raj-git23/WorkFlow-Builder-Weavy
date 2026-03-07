@@ -28,14 +28,15 @@ import {
   Snapshot,
   ToolMode,
 } from "@/types/nodetype";
-import LeftSidebar from "@/components/LeftSidebar";
-import { BottomControls } from "@/components/BottomControls";
-import { useFlowStore } from "@/store/useflowstore";
+import LeftSidebar from "@/components/editor/LeftSidebar";
+import { BottomControls } from "@/components/editor/BottomControls";
 import { genId, takeSnapshot } from "@/lib/helper";
-import { DEFAULT_DATA, MAX_HISTORY } from "@/lib/assets";
+import { MAX_HISTORY } from "@/lib/constant";
 import { getEdgeStyle } from "@/lib/edge-style";
+import { DEFAULT_DATA } from "@/lib/nodesConfig";
+import { useFlowStore } from "@/store/useFlowStore";
 
-// ─── Canvas ───────────────────────────────────────────────────────────────────
+//  Canvas
 
 export function Canvas() {
   const [toolMode, setToolMode] = useState<ToolMode>("selection");
@@ -48,6 +49,8 @@ export function Canvas() {
   const [future, setFuture] = useState<Snapshot[]>([]);
 
   const isRestoringRef = useRef(false);
+
+  // Since functions are memomized, might capture stale state so to get latest data, we use useRef
   const nodesRef = useRef(nodes);
   const edgesRef = useRef(edges);
   const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,7 +72,7 @@ export function Canvas() {
     syncEdges(edges);
   }, [edges, syncEdges]);
 
-  // Manual creation of React Flow functions
+  // We're saving history using debounce of 300 ms
   const scheduleHistoryPush = useCallback(() => {
     if (isRestoringRef.current) return;
 
@@ -127,15 +130,23 @@ export function Canvas() {
     [onEdgesChange, scheduleHistoryPush],
   );
 
-  const onConnect = useCallback((connection: Connection) => {
+  const onConnect = useCallback(
+    (connection: Connection) => {
       pushNow();
       setEdges((eds) => {
-        const sourceNode = nodesRef.current.find((n) => n.id === connection.source);
-        const targetNode = nodesRef.current.find((n) => n.id === connection.target);
+        const sourceNode = nodesRef.current.find(
+          (n) => n.id === connection.source,
+        );
+        const targetNode = nodesRef.current.find(
+          (n) => n.id === connection.target,
+        );
 
         if (!sourceNode || !targetNode) return addEdge(connection, eds);
 
-        const edgeStyle = getEdgeStyle(sourceNode.type as NodeType, targetNode.type as NodeType);
+        const edgeStyle = getEdgeStyle(
+          sourceNode.type as NodeType,
+          targetNode.type as NodeType,
+        );
 
         return addEdge({ ...connection, ...edgeStyle }, eds);
       });
@@ -144,7 +155,8 @@ export function Canvas() {
   );
 
   // When a node is deleted, reconnect its incomers to its outgoers
-  const onNodesDelete = useCallback((deleted: Node[]) => {
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
       setEdges((eds) =>
         deleted.reduce((acc, node) => {
           const incomers = getIncomers(node, nodesRef.current, acc);
@@ -170,7 +182,10 @@ export function Canvas() {
     const prev = past[past.length - 1];
     isRestoringRef.current = true;
     setPast((p) => p.slice(0, -1));
-    setFuture((f) => [...f, takeSnapshot(nodesRef.current, edgesRef.current)]);
+    setFuture((f) => [
+      ...f,
+      takeSnapshot(nodesRef.current, edgesRef.current),
+    ]);
     setNodes(prev.nodes);
     setEdges(prev.edges);
     setTimeout(() => {
@@ -183,7 +198,10 @@ export function Canvas() {
     const next = future[future.length - 1];
     isRestoringRef.current = true;
     setFuture((f) => f.slice(0, -1));
-    setPast((p) => [...p, takeSnapshot(nodesRef.current, edgesRef.current)]);
+    setPast((p) => [
+      ...p,
+      takeSnapshot(nodesRef.current, edgesRef.current),
+    ]);
     setNodes(next.nodes);
     setEdges(next.edges);
     setTimeout(() => {
@@ -191,17 +209,15 @@ export function Canvas() {
     }, 0);
   }, [future, setNodes, setEdges]);
 
-  const spawnNode = useCallback((
-      type: NodeType,
-      position: { x: number; y: number },
-      data?: Record<string, unknown>,
-    ) => {
+  // Main function which creates a new node
+  const spawnNode = useCallback(
+    (type: NodeType, position: { x: number; y: number }, data?: Record<string, unknown>) => {
       pushNow();
       const newNode: Node = {
         id: genId(type),
         type,
         position,
-        data: { ...(data ?? DEFAULT_DATA[type]) },
+        data: { ...(data ?? DEFAULT_DATA[type]) }, // Initialise a node with some values
       };
       setNodes((nds) => [...nds, newNode]);
       return newNode;
@@ -209,7 +225,8 @@ export function Canvas() {
     [setNodes, pushNow],
   );
 
-  const handleAddNode = useCallback((type: NodeType) => {
+  const handleAddNode = useCallback(
+    (type: NodeType) => {
       const position = screenToFlowPosition({
         x: window.innerWidth / 2 + Math.random() * 80 - 40,
         y: window.innerHeight / 2 + Math.random() * 80 - 40,
@@ -219,7 +236,8 @@ export function Canvas() {
     [screenToFlowPosition, spawnNode],
   );
 
-  const duplicateNode = useCallback((id: string) => {
+  const duplicateNode = useCallback(
+    (id: string) => {
       const node = getNode(id);
       if (!node) return;
       spawnNode(
@@ -231,7 +249,8 @@ export function Canvas() {
     [getNode, spawnNode],
   );
 
-  const deleteNode = useCallback((id: string) => {
+  const deleteNode = useCallback(
+    (id: string) => {
       pushNow();
       setNodes((nds) => nds.filter((n) => n.id !== id));
       setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
@@ -245,10 +264,13 @@ export function Canvas() {
     e.dataTransfer.effectAllowed = "move";
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
       e.preventDefault();
-      const type = (e.dataTransfer.getData("application/reactflow-nodetype",) as NodeType) || dragTypeRef.current;
-      
+      const type = (e.dataTransfer.getData(
+        "application/reactflow-nodetype",
+      ) as NodeType) || dragTypeRef.current;
+
       if (!type) return;
       dragTypeRef.current = null;
       spawnNode(type, screenToFlowPosition({ x: e.clientX, y: e.clientY }));
@@ -265,22 +287,33 @@ export function Canvas() {
     edgeReconnectSuccessful.current = false;
   }, []);
 
-  const onReconnect = useCallback((oldEdge: Edge, newConnection: Connection) => {
+  const onReconnect = useCallback(
+    (oldEdge: Edge, newConnection: Connection) => {
       edgeReconnectSuccessful.current = true;
       setEdges((els) => {
-        const sourceNode = nodesRef.current.find((n) => n.id === newConnection.source);
-        const targetNode = nodesRef.current.find((n) => n.id === newConnection.target);
-  
-        if (!sourceNode || !targetNode) return reconnectEdge(oldEdge, newConnection, els);
-  
-        const edgeStyle = getEdgeStyle(sourceNode.type as NodeType, targetNode.type as NodeType);
-  
+        const sourceNode = nodesRef.current.find(
+          (n) => n.id === newConnection.source,
+        );
+        const targetNode = nodesRef.current.find(
+          (n) => n.id === newConnection.target,
+        );
+
+        if (!sourceNode || !targetNode)
+          return reconnectEdge(oldEdge, newConnection, els);
+
+        const edgeStyle = getEdgeStyle(
+          sourceNode.type as NodeType,
+          targetNode.type as NodeType,
+        );
+
         return reconnectEdge(oldEdge, { ...newConnection, ...edgeStyle }, els);
       });
-    }, [setEdges],
+    },
+    [setEdges],
   );
 
-  const onReconnectEnd = useCallback((_: MouseEvent | TouchEvent, edge: Edge) => {
+  const onReconnectEnd = useCallback(
+    (_: MouseEvent | TouchEvent, edge: Edge) => {
       if (!edgeReconnectSuccessful.current) {
         setEdges((eds) => eds.filter((e) => e.id !== edge.id));
       }
@@ -334,7 +367,7 @@ export function Canvas() {
               />
             </Panel>
 
-            <Background color="#dcd8d8af" bgColor="#0a0a0a" gap={16} />
+            <Background color="#253042" bgColor="#0a0a0a" gap={13} />
             <MiniMap
               maskStrokeWidth={2}
               offsetScale={10}
@@ -352,3 +385,4 @@ export function Canvas() {
     </NodeActionsContext.Provider>
   );
 }
+

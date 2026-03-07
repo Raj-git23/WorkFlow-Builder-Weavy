@@ -35,13 +35,7 @@ export type UploadVideoRFNode = Node<UploadNodeData, "uploadVideo">;
 
 export type ToolMode = "selection" | "pan";
 
-export type NodeType =
-  | "textArea"
-  | "uploadImage"
-  | "uploadVideo"
-  | "llm"
-  | "cropImage"
-  | "extractFrame";
+export type NodeType = | "textArea" | "uploadImage" | "uploadVideo" | "llm" | "cropImage" | "extractFrame";
 
 export type BaseNodeData = Record<string, unknown>;
 

@@ -30,6 +30,6 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "trigger.config.ts"
-  ],
+, "app/api/extract-frame"  ],
   "exclude": ["node_modules"]
 }

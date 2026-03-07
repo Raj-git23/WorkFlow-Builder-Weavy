@@ -1,6 +1,4 @@
-"use client";
-
-import { Canvas } from "@/components/Canvas";
+import { Canvas } from "@/components/editor/Canvas";
 import { ReactFlowProvider } from "@xyflow/react";
 
 export default function Home() {

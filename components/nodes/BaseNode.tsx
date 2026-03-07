@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Position } from "@xyflow/react";
-import CustomHandle from "@/utils/CustomHandle";
+import CustomHandle from "@/components/nodes/CustomHandle";
 import { BaseNodeProps } from "@/types/filetypes";
 import { BaseNodeData } from "@/types/nodetype";
 
@@ -36,3 +36,4 @@ export function BaseNode<T extends BaseNodeData>({
     </div>
   );
 }
+

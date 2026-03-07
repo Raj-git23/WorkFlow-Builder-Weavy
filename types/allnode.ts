@@ -1,8 +1,8 @@
-import { TextAreaNode } from "@/utils/Nodes/TextAreaNode";
-import { ExtractFrameNode } from "@/utils/Nodes/ExtractFrameNode";
-import { CropImageNode } from "@/utils/Nodes/CropImgNode";
-import { LLMNode } from "@/utils/Nodes/LlmNode";
-import { UploadImageNode, UploadVideoNode } from "@/utils/Nodes/UploadNode";
+import { TextAreaNode } from "@/components/nodes/node-types/TextAreaNode";
+import { ExtractFrameNode } from "@/components/nodes/node-types/ExtractFrameNode";
+import { CropImageNode } from "@/components/nodes/node-types/CropImageNode";
+import { LLMNode } from "@/components/nodes/node-types/LlmNode";
+import { UploadImageNode, UploadVideoNode } from "@/components/nodes/node-types/UploadNode";
 
 const nodeTypes = {
   textArea: TextAreaNode,

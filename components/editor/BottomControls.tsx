@@ -4,10 +4,8 @@ import { MousePointer2, Hand, Undo2, Redo2, ChevronDown } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
 import { useViewport, useReactFlow } from "@xyflow/react";
 import { cn } from "@/lib/utils";
-import { ZOOM_OPTIONS } from "@/lib/assets";
+import { ZOOM_OPTIONS } from "@/lib/constant";
 import { BottomControlsProps } from "@/types/filetypes";
-
-
 
 export function BottomControls({
   toolMode,
@@ -18,7 +16,7 @@ export function BottomControls({
   canRedo,
 }: BottomControlsProps) {
   const { zoom } = useViewport();
-  
+
   const { zoomTo, fitView } = useReactFlow();
   const [zoomDropdownOpen, setZoomDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,8 +44,7 @@ export function BottomControls({
   };
 
   return (
-    <div className="flex items-center gap-0 rounded-md border border-sidebar-border bg-sidebar-background px-2 py-1.5 shadow-lg">
-
+    <div className="flex items-center gap-0 rounded-md border border-sidebar-border bg-sidebar-background px-2 py-1.5 shadow-lg text-sm font-dmsans">
       {/* selection tool */}
       <button
         type="button"
@@ -56,7 +53,7 @@ export function BottomControls({
           "rounded-sm p-2 mr-2 transition-colors",
           toolMode === "selection"
             ? "bg-yellow-bg text-[#1c1b1f]"
-            : "text-sidebar-foreground hover:bg-button-hover"
+            : "text-sidebar-foreground hover:bg-button-hover",
         )}
         aria-label="Selection tool"
       >
@@ -71,7 +68,7 @@ export function BottomControls({
           "rounded-sm p-2 transition-colors",
           toolMode === "pan"
             ? "bg-yellow-bg text-[#1c1b1f]"
-            : "text-sidebar-foreground hover:bg-button-hover"
+            : "text-sidebar-foreground hover:bg-button-hover",
         )}
         aria-label="Pan tool"
       >
@@ -89,7 +86,7 @@ export function BottomControls({
           "rounded-lg p-2 transition-colors",
           canUndo
             ? "text-sidebar-foreground hover:bg-button-hover"
-            : "cursor-not-allowed text-sidebar-foreground/40"
+            : "cursor-not-allowed text-sidebar-foreground/40",
         )}
         aria-label="Undo"
       >
@@ -105,7 +102,7 @@ export function BottomControls({
           "rounded-lg p-2 transition-colors",
           canRedo
             ? "text-sidebar-foreground hover:bg-button-hover"
-            : "cursor-not-allowed text-sidebar-foreground/40"
+            : "cursor-not-allowed text-sidebar-foreground/40",
         )}
         aria-label="Redo"
       >
@@ -119,10 +116,16 @@ export function BottomControls({
         <button
           type="button"
           onClick={() => setZoomDropdownOpen((o) => !o)}
-          className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm hover:cursor-pointer w-full font-semibold text-sidebar-foreground transition-colors hover:bg-button-hover"
+          className="flex items-center gap-1 rounded-lg px-2 py-1.5 hover:cursor-pointer w-16 font-semibold text-sidebar-foreground transition-colors hover:bg-button-hover"
         >
           <span>{zoomPercent}%</span>
-          <ChevronDown size={14} className={cn("transition-transform", zoomDropdownOpen && "rotate-180")} />
+          <ChevronDown
+            size={14}
+            className={cn(
+              "transition-transform",
+              zoomDropdownOpen && "rotate-180",
+            )}
+          />
         </button>
 
         {zoomDropdownOpen && (
@@ -133,8 +136,10 @@ export function BottomControls({
                 type="button"
                 onClick={() => handleZoomSelect(opt)}
                 className={cn(
-                  "w-full px-3 py-1.5 text-left text-sm",
-                  zoomPercent === opt ? "bg-button-hover font-medium" : "hover:bg-button-hover hover:cursor-pointer"
+                  "w-full px-3 py-1.5 text-left",
+                  zoomPercent === opt
+                    ? "bg-button-hover font-medium"
+                    : "hover:bg-button-hover hover:cursor-pointer",
                 )}
               >
                 {opt}%
@@ -144,7 +149,7 @@ export function BottomControls({
             <button
               type="button"
               onClick={handleFitView}
-              className="w-full px-3 py-1.5 text-left text-sm hover:bg-button-hover"
+              className="w-full px-3 py-1.5 text-left hover:bg-button-hover"
             >
               Fit view
             </button>
@@ -154,3 +159,4 @@ export function BottomControls({
     </div>
   );
 }
+

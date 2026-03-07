@@ -1,22 +1,34 @@
-// utils/Nodes/TextAreaNode.tsx
+// components/nodes/TextAreaNode.tsx
 import { useCallback } from "react";
 import { Position, type NodeProps } from "@xyflow/react";
-import { BaseNode } from "@/utils/BaseNode";
-import { NodeShell } from "@/utils/Nodes/NodeShell";
+import { BaseNode } from "@/components/nodes/BaseNode";
+import { NodeShell } from "@/components/nodes/NodeShell";
 import { Textarea } from "@/components/ui/textarea";
 import { TextAreaRFNode, TextNodeData } from "@/types/nodetype";
-import { useFlowStore } from "@/store/useflowstore";
+import { useFlowStore } from "@/store/useFlowStore";
 
 export function TextAreaNode(props: NodeProps<TextAreaRFNode>) {
   const setOutput = useFlowStore((s) => s.setOutput);
 
-  
-  const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {   // Publish text to store so LLM node can read it via the connected edge
-    setOutput(props.id, { text: evt.target.value });
-  }, [props.id, setOutput]);
+  const onChange = useCallback(
+    (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+      // Publish text to store so LLM node can read it via the connected edge
+      setOutput(props.id, { text: evt.target.value });
+    },
+    [props.id, setOutput],
+  );
 
   return (
-    <BaseNode<TextNodeData> {...props} handles={[{ text: "Prompt", position: Position.Right, style: { background: '#f1a0fa' }}]}>
+    <BaseNode<TextNodeData>
+      {...props}
+      handles={[
+        {
+          text: "Prompt",
+          position: Position.Right,
+          style: { background: "#f1a0fa" },
+        },
+      ]}
+    >
       {({ id, data }) => (
         <NodeShell title="Prompt" nodeId={props?.id}>
           <Textarea
@@ -32,3 +44,4 @@ export function TextAreaNode(props: NodeProps<TextAreaRFNode>) {
     </BaseNode>
   );
 }
+

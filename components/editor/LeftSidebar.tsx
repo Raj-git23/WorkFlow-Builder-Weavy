@@ -20,16 +20,20 @@ import {
 } from "@/components/ui/tooltip";
 import { NodeType } from "@/types/nodetype";
 import { LeftSidebarProps } from "@/types/filetypes";
-import { NODES } from "@/lib/assets";
+import { NODES } from "@/lib/nodesConfig";
 
-
-
-
-const LeftSidebar: React.FC<LeftSidebarProps> = ({ onAddNode, onDragStart }) => {
+const LeftSidebar: React.FC<LeftSidebarProps> = ({
+  onAddNode,
+  onDragStart,
+}) => {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className={`${isOpen ? "w-14" : "w-auto"} flex flex-col items-center h-full`}>
+    <div
+      className={`${
+        isOpen ? "w-14" : "w-auto"
+      } flex flex-col items-center h-full`}
+    >
       {isOpen && (
         <main className="bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border py-4 flex flex-col items-center z-20 h-full w-full">
           <Cloud height="32px" width="32px" className="mb-8" />
@@ -48,7 +52,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onAddNode, onDragStart }) => 
                       {item.icon}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-sidebar-border">
+                  <TooltipContent
+                    side="right"
+                    className="bg-sidebar-border"
+                  >
                     {item.name}
                   </TooltipContent>
                 </Tooltip>
@@ -64,10 +71,15 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onAddNode, onDragStart }) => 
         } rounded-md p-1 mt-auto absolute bottom-4 z-50 bg-sidebar-background text-sidebar-foreground cursor-pointer hover:bg-button-hover`}
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        {isOpen ? <ChevronLeft strokeWidth={1} /> : <ChevronRight strokeWidth={1} />}
+        {isOpen ? (
+          <ChevronLeft strokeWidth={1} />
+        ) : (
+          <ChevronRight strokeWidth={1} />
+        )}
       </button>
     </div>
   );
 };
 
 export default LeftSidebar;
+
