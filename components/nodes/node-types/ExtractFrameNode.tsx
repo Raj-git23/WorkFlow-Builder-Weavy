@@ -9,7 +9,7 @@ import { ExtractFrameNodeData, ExtractFrameRFNode } from "@/types/nodetype";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { frameToTimecode } from "@/lib/helper";
-import { useNodeInput, useFlowStore } from "@/store/useFlowStore";
+import { useFlowStore, useNodeInput } from "@/store/useFlowStore";
 
 const VIDEO_IN_HANDLE = (id: string) => `handle-${id}-video-in`;
 const FRAME_OUT_HANDLE = (id: string) => `${id}-frame-out`;

@@ -1,39 +1,21 @@
 // components/nodes/CropImgNode.tsx
 import { type NodeProps, Position } from "@xyflow/react";
 import { useState, useCallback, useRef, useEffect } from "react";
-import {
-  ChevronsUpDown as ChevronsUpDownIcon,
-  Check as CheckIcon,
-  Link,
-  Play,
-  Loader2,
-  Link2,
-  Unlink2,
-  Link2Off,
-} from "lucide-react";
+import { ChevronsUpDown as ChevronsUpDownIcon, Check as CheckIcon, Link, Play, Loader2, Link2, Unlink2, Link2Off, } from "lucide-react";
 import { NodeShell } from "@/components/nodes/NodeShell";
 import { BaseNode } from "@/components/nodes/BaseNode";
 import { PreviewArea } from "@/components/nodes/PreviewArea";
 import { CropNodeData, CropRFNode } from "@/types/nodetype";
 import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList, } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ASPECT_MAP, ASPECT_RATIOS } from "@/lib/constant";
-import { useNodeInput, useFlowStore } from "@/store/useFlowStore";
-import Cropper, {
-  MediaSize,
-  getInitialCropFromCroppedAreaPercentages,
-} from "react-easy-crop";
+import Cropper, { MediaSize, getInitialCropFromCroppedAreaPercentages, } from "react-easy-crop";
 import { Point, Area } from "react-easy-crop";
 import { parseAspectRatio, round } from "@/lib/helper";
+import { useFlowStore, useNodeInput } from "@/store/useFlowStore";
 
 const FILE_IN_HANDLE = (id: string) => `handle-${id}-file-in`;
 const FILE_OUT_HANDLE = (id: string) => `${id}-file-out`;

@@ -5,16 +5,14 @@ import { Upload, Loader2, AlertCircle, X } from "lucide-react";
 import { NodeShell } from "@/components/nodes/NodeShell";
 import { PreviewArea } from "@/components/nodes/PreviewArea";
 import { BaseNode } from "@/components/nodes/BaseNode";
-import {
-  UploadImageRFNode,
-  UploadNodeData,
-  UploadVideoRFNode,
-} from "@/types/nodetype";
+import { UploadImageRFNode, UploadNodeData, UploadVideoRFNode, } from "@/types/nodetype";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ACCEPT } from "@/lib/constant";
 import { useFlowStore } from "@/store/useFlowStore";
 import { useTransloaditUpload } from "@/lib/useTransloaditUpload";
+
+
 
 function UploadContent({
   nodeId,
