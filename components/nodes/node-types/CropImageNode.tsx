@@ -192,7 +192,14 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
       {() => (
         <NodeShell title="Crop" className="h-full" nodeId={props?.id}>
           {/* Preview: shows result if cropped, else shows input */}
-          <PreviewArea>
+          <PreviewArea
+            adaptive={Boolean(resultUrl || imageUrl)}
+            style={
+              mediaSize.width && mediaSize.height
+                ? { aspectRatio: `${mediaSize.width} / ${mediaSize.height}` }
+                : undefined
+            }
+          >
             {(resultUrl || imageUrl) && (
               // <img
               //   src={resultUrl ?? imageUrl!}

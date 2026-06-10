@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ClerkProvider, RedirectToSignIn, SignedIn, SignedOut } from '@clerk/nextjs'
+import { ClerkProvider, RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { dmMono, dmSans, geistMono, geistSans, inter, roboto, roboto_mono } from "@/lib/font-styles";
 import { Toaster } from "sonner";
+import ClerkAuthSync from "@/components/auth/ClerkAuthSync";
 
 
 
@@ -25,6 +26,7 @@ export default function RootLayout({
         >
           <SignedIn>
             <TooltipProvider>
+              <ClerkAuthSync />
               {children}
               <Toaster />
             </TooltipProvider>

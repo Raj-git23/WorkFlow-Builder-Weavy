@@ -89,14 +89,7 @@ function UploadContent({
   return (
     <>
       {previewUrl ? (
-        <div
-          className="relative max-w-sm h-full rounded-md overflow-hidden"
-          style={{
-            backgroundImage:
-              "repeating-conic-gradient(#2a2a2f 0% 25%, #1e1e1e 0% 50%)",
-            backgroundSize: "20px 20px",
-          }}
-        >
+        <PreviewArea adaptive className="max-h-128">
           {/* Re-upload overlay */}
           <label
             className={cn(
@@ -145,16 +138,16 @@ function UploadContent({
             <img
               src={previewUrl}
               alt="preview"
-              className="block w-full h-fit rounded-xs"
+              className="block w-full h-auto max-h-128 object-contain rounded-xs"
             />
           ) : (
             <video
               src={previewUrl}
               controls
-              className="block w-full h-1/2 rounded-xs"
+              className="block w-full h-auto max-h-128 object-contain rounded-xs"
             />
           )}
-        </div>
+        </PreviewArea>
       ) : (
         <PreviewArea>
           <label
@@ -228,7 +221,7 @@ export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
       {({ id, data }) => (
         <NodeShell
           title="Upload Image"
-          className={data?.url ? "max-h-full" : "h-80"}
+          className="h-auto w-80"
           nodeId={props?.id}
         >
           <UploadContent nodeId={id} fileType="image" savedUrl={data.url} />
@@ -255,7 +248,7 @@ export function UploadVideoNode(props: NodeProps<UploadVideoRFNode>) {
       {({ id, data }) => (
         <NodeShell
           title="Upload Video"
-          className={data.url ? "max-h-fit" : "h-96 max-h-full"}
+          className="h-auto w-72"
           nodeId={props?.id}
         >
           <UploadContent nodeId={id} fileType="video" savedUrl={data.url} />

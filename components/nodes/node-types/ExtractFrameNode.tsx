@@ -84,18 +84,18 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
           nodeId={props?.id}
         >
           {/* Preview: video input OR extracted frame */}
-          <PreviewArea>
+          <PreviewArea adaptive={Boolean(frameUrl || videoUrl)} className="max-h-128">
             {frameUrl ? (
               <img
                 src={frameUrl}
                 alt="extracted frame"
-                className="absolute inset-0 w-full h-full object-cover"
+                className="block w-full h-auto max-h-128 object-contain"
               />
             ) : videoUrl ? (
               <video
                 src={videoUrl}
                 controls
-                className="flex inset-0 w-full h-full object-cover"
+                className="block w-full h-auto max-h-128 object-contain"
               />
             ) : null}
             {status === "running" && (
