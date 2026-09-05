@@ -1,25 +1,35 @@
+// lib/useTransloaditUpload.ts
 import { UploadResult, UploadFileStatus } from "@/types/filetypes";
 import { useState, useCallback } from "react";
 
-
-// To handle uploading img and vid on Transloadit
-
+// Handles uploading images and videos (from File or URL) on Transloadit
 export function useTransloaditUpload(fileType: "image" | "video") {
   const [status, setStatus] = useState<UploadFileStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<UploadResult | null>(null);
 
   const upload = useCallback(
-    async (file: File): Promise<UploadResult | null> => {
+    async (input: File | string): Promise<UploadResult | null> => {
       setStatus("uploading");
       setError(null);
 
       try {
-        const body = new FormData();
-        body.append("file", file);
-        body.append("fileType", fileType); // for template selection
+        let res: Response;
 
-        const res = await fetch("/api/transloadit", { method: "POST", body });  // api calling
+        if (typeof input === "string") {
+          // Send URL payload for server-side fetch & Transloadit processing
+          res = await fetch("/api/transloadit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: input, fileType }),
+          });
+        } else {
+          // Send FormData payload for file upload
+          const body = new FormData();
+          body.append("file", input);
+          body.append("fileType", fileType);
+          res = await fetch("/api/transloadit", { method: "POST", body });
+        }
 
         if (!res.ok) {
           const { error: msg } = await res.json();
@@ -37,7 +47,7 @@ export function useTransloaditUpload(fileType: "image" | "video") {
         return null;
       }
     },
-    [fileType],
+    [fileType]
   );
 
   const reset = useCallback(() => {

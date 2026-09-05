@@ -1,94 +1,118 @@
 import { task } from "@trigger.dev/sdk";
 import Ffmpeg from "fluent-ffmpeg";
-import ffmpegPath from "ffmpeg-static";     // ffmpeg-static is a library that provides the path to the ffmpeg binary, it prevents from downloading ffmpeg on the server and runs on cloud without the need of ffmpeg installed.
+import ffmpegPath from "ffmpeg-static";
 import fs from "fs/promises";
-import { createWriteStream } from "fs";     
-import { pipeline } from "stream/promises";   // pipeline is a function that pipes the data from the source to the destination.
-import { Readable } from "stream";             // Readable is a stream that can be read from.
+import { createWriteStream } from "fs";
+import { pipeline } from "stream/promises";
+import { Readable } from "stream";
 import os from "os";
 import path from "path";
 
-Ffmpeg.setFfmpegPath(ffmpegPath!);    // Tells fluent-ffmpeg where the actual FFmpeg binary is, without this it'll try to find globally installed ffmpeg and gives error if not found.
+// Tell fluent-ffmpeg where the FFmpeg binary is located
+if (ffmpegPath) {
+  Ffmpeg.setFfmpegPath(ffmpegPath);
+}
 
-
-// Streams the download directly to disk — avoids loading large files into memory and prevents corrupt temp files from partial reads.
+// Streams or copies the media file directly to disk temp location
 async function downloadToTmp(url: string, ext: string): Promise<string> {
-  const res = await fetch(url);
-  
-  if (!res.ok || !res.body) {
-    throw new Error(`Failed to download file: ${res.status} ${res.statusText}`);
+  const dest = path.join(
+    os.tmpdir(),
+    `tl-${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`
+  );
+
+  // 1. Handle Base64 Data URLs
+  if (url.startsWith("data:")) {
+    const base64Data = url.split(",")[1];
+    const buffer = Buffer.from(base64Data, "base64");
+    await fs.writeFile(dest, buffer);
+    return dest;
   }
 
-  const dest = path.join(os.tmpdir(), `tl-${Date.now()}.${ext}`);   // Creates a temporary file in the OS's temporary directory, regardless of any OS.
-  const writer = createWriteStream(dest);      
-  
-  // It takes the res.body as a stream, converts the web stream to node.js stream (using Readable.fromWeb) and then pipes the data at the destination path, which help if we get interruption by any reason (network or memory issue).
-  await pipeline(Readable.fromWeb(res.body as any), writer);        
+  // 2. Handle absolute local filesystem path (e.g. C:/... or /...)
+  if (path.isAbsolute(url) || /^[a-zA-Z]:[\\/]/.test(url)) {
+    try {
+      await fs.copyFile(url, dest);
+      return dest;
+    } catch (e) {
+      console.warn(`Direct copy failed for absolute path ${url}:`, e);
+    }
+  }
+
+  // 3. Handle local relative /uploads/ path across potential base dirs
+  if (url.startsWith("/uploads/") || url.startsWith("uploads/")) {
+    const cleanPath = url.startsWith("/") ? url.slice(1) : url;
+    const candidates = [
+      path.join(process.cwd(), "public", cleanPath),
+      path.resolve(__dirname, "../../public", cleanPath),
+      path.resolve(__dirname, "../public", cleanPath),
+    ];
+    for (const candidate of candidates) {
+      try {
+        await fs.access(candidate);
+        await fs.copyFile(candidate, dest);
+        return dest;
+      } catch {
+        // Continue to next candidate
+      }
+    }
+  }
+
+  // 4. Handle HTTP / HTTPS URL
+  let targetUrl = url;
+  if (url.startsWith("/")) {
+    targetUrl = `http://localhost:3000${url}`;
+  }
+
+  const res = await fetch(targetUrl, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "*/*",
+    },
+    redirect: "follow",
+  });
+
+  if (!res.ok || !res.body) {
+    if (res.status === 404 && targetUrl.includes("transloadit.com/scratch/")) {
+      throw new Error(
+        `Transloadit scratch file expired (404 Not Found). Please re-upload or select a fresh video.`
+      );
+    }
+    throw new Error(
+      `Failed to download file (${res.status} ${res.statusText}): ${targetUrl}`
+    );
+  }
+
+  const writer = createWriteStream(dest);
+  await pipeline(Readable.fromWeb(res.body as any), writer);
   return dest;
 }
 
-
-// Converts a local image into a Base64-encoded Data URL string for web use.
+// Converts a local file into a Base64-encoded Data URL string
 async function readAsBase64(filePath: string): Promise<string> {
   const buffer = await fs.readFile(filePath);
   const ext = path.extname(filePath).slice(1);
-  const mime = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
+  const mime = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
   return `data:${mime};base64,${buffer.toString("base64")}`;
 }
 
-
-// Cleans up the temporary generated files after the task is complete.
+// Cleans up temporary files after execution
 async function cleanup(...paths: string[]) {
   await Promise.all(paths.map((p) => fs.unlink(p).catch(() => {})));
 }
 
-
-// Wraps FFmpeg's event listeners into a Promise so we can use 'await' to wait for completion.
+// Wraps FFmpeg command execution into a Promise
 function runFfmpeg(cmd: Ffmpeg.FfmpegCommand): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Register "end" via the typed overload to resolve the promise when the command is complete. It prevent code from continuing further before running ffmpeg or takes on-existing output file 
-    cmd.on("end", (_out: string | null, _err: string | null) => resolve());
-
-    // If there is an error, reject the promise with the error message and the stderr output.
+    cmd.on("end", () => resolve());
     (cmd as any).on("error", (err: Error, _stdout: string, stderr: string) =>
-      reject(new Error(`${err.message}\n${stderr}`)),
+      reject(new Error(`${err.message}\n${stderr}`))
     );
-
-    // Runs the ffmpeg command.
     cmd.run();
   });
 }
 
-
-// Gets image width/height via ffprobe — needed for integer pixel crop values
-function getImageDimensions(filePath: string, ): Promise<{ w: number; h: number }> {
-  return new Promise((resolve, reject) => {
-    Ffmpeg.ffprobe(filePath, (err, meta) => {
-      
-      if (err) return reject(err);
-      
-      const stream = meta.streams.find((s) => s.codec_type === "video");
-      
-      if (!stream?.width || !stream?.height) {
-        return reject(new Error("Could not read image dimensions"));
-      }
-      
-      resolve({ w: stream.width, h: stream.height });
-    });
-  });
-}
-
-function getVideoDuration(filePath: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    Ffmpeg.ffprobe(filePath, (err, meta) => {
-      if (err) return reject(err);
-      resolve(meta.format.duration ?? 0);
-    });
-  });
-}
-
-
-// Crop Image Task
+// Crop Image Task (FFmpeg filter evaluates input dimensions natively via iw & ih)
 export const cropImageTask = task({
   id: "crop-image",
   maxDuration: 120,
@@ -104,22 +128,13 @@ export const cropImageTask = task({
     const input = await downloadToTmp(imageUrl, ext);
     const output = path.join(os.tmpdir(), `tl-cropped-${Date.now()}.${ext}`);
 
-    // Get actual pixel dimensions first — Windows FFmpeg builds don't reliably
-    const { w, h } = await getImageDimensions(input);
-
-    const cropW = Math.floor((width / 100) * w);
-    const cropH = Math.floor((height / 100) * h);
-    const cropX = Math.floor((x / 100) * w);
-    const cropY = Math.floor((y / 100) * h);
-
-    // crop area doesn't exceed image bounds
-    const safeW = Math.min(cropW, w - cropX);
-    const safeH = Math.min(cropH, h - cropY);
+    // FFmpeg crop filter natively computes input width (iw) and height (ih)
+    const cropFilter = `crop=iw*${width}/100:ih*${height}/100:iw*${x}/100:ih*${y}/100`;
 
     await runFfmpeg(
       Ffmpeg(input)
-        .videoFilters(`crop=${safeW}:${safeH}:${cropX}:${cropY}`)
-        .output(output),
+        .videoFilters(cropFilter)
+        .output(output)
     );
 
     const dataUrl = await readAsBase64(output);
@@ -129,31 +144,26 @@ export const cropImageTask = task({
 });
 
 // Extract Frame Task
-
 export const extractFrameTask = task({
   id: "extract-frame",
   maxDuration: 120,
   run: async (payload: {
     videoUrl: string;
-    timestamp: number;
+    timestamp: number; // timestamp in seconds
     percentage?: number;
   }) => {
     const { videoUrl, timestamp, percentage } = payload;
     const input = await downloadToTmp(videoUrl, "mp4");
     const output = path.join(os.tmpdir(), `tl-frame-${Date.now()}.jpg`);
 
-    let seekTime = timestamp;
-    if (percentage !== undefined) {
-      const duration = await getVideoDuration(input);
-      seekTime = (percentage / 100) * duration;
-    }
+    const seekTime = timestamp || 0;
 
     await runFfmpeg(
       Ffmpeg(input)
         .seekInput(seekTime)
         .frames(1)
         .output(output)
-        .outputOptions(["-q:v 2"]),
+        .outputOptions(["-q:v 2"])
     );
 
     const dataUrl = await readAsBase64(output);

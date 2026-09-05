@@ -12,42 +12,61 @@ interface FlowStore {
   edges: Edge[];
   setOutput: (nodeId: string, output: NodeOutput) => void;  
   setEdges: (edges: Edge[]) => void;
-  getInput: (targetNodeId: string, handleId: string) => NodeOutput | null;     // Returns the source node's output for a specific target handle.
+  getInput: (targetNodeId: string, handleId?: string) => NodeOutput | null;
 }
-
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
   outputs: {},
   edges: [],
 
   setOutput: (nodeId, output) =>
-    set((s) => ({ outputs: { ...s.outputs, [nodeId]: { ...s.outputs[nodeId], ...output } } })),   // setting acc to nodes
+    set((s) => ({
+      outputs: {
+        ...s.outputs,
+        [nodeId]: { ...s.outputs[nodeId], ...output },
+      },
+    })),
 
-  
-  setEdges: (edges) => set({ edges }),    // Replacing edges triggers re-renders only in nodes whose handle is affected
+  setEdges: (edges) => set({ edges }),
 
   getInput: (targetNodeId, handleId) => {
     const { edges, outputs } = get();
-    const edge = edges.find(
-      (e) => e.target === targetNodeId && e.targetHandle === handleId
-    );
+    const edge = edges.find((e) => {
+      if (e.target !== targetNodeId) return false;
+      if (!handleId) return true;
+      const targetH = e.targetHandle || "";
+      return (
+        targetH === handleId ||
+        targetH === `handle-${handleId}` ||
+        `handle-${targetH}` === handleId ||
+        targetH.endsWith(handleId) ||
+        handleId.endsWith(targetH)
+      );
+    });
 
     if (!edge) return null;
-
-    return outputs[edge?.source] ?? null;
+    return outputs[edge.source] ?? null;
   },
 }));
 
-
-// Targeted selector hooks
-// Each node uses one of these instead of calling getInput() inside render.
-// Zustand only re-renders the subscriber when the specific slice changes.
-
-export function useNodeInput(targetNodeId: string, handleId: string) {
+/**
+ * Targeted selector hook for subscribing to upstream node outputs based on target node ID and handle ID.
+ */
+export function useNodeInput(targetNodeId: string, handleId?: string) {
   return useFlowStore((s) => {
-    const edge = s.edges.find(
-      (e) => e.target === targetNodeId && e.targetHandle === handleId
-    );
+    const edge = s.edges.find((e) => {
+      if (e.target !== targetNodeId) return false;
+      if (!handleId) return true;
+      const targetH = e.targetHandle || "";
+      return (
+        targetH === handleId ||
+        targetH === `handle-${handleId}` ||
+        `handle-${targetH}` === handleId ||
+        targetH.endsWith(handleId) ||
+        handleId.endsWith(targetH)
+      );
+    });
+
     if (!edge) return null;
     return s.outputs[edge.source] ?? null;
   });

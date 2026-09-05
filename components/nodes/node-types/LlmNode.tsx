@@ -7,7 +7,7 @@ import { BaseNode } from "@/components/nodes/BaseNode";
 import { PreviewArea } from "@/components/nodes/PreviewArea";
 import { LLMNodeData, LLMRFNode } from "@/types/nodetype";
 import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { MODELS } from "@/lib/constant";
@@ -16,8 +16,9 @@ import { useNodeInput } from "@/store/useFlowStore";
 const HANDLE_SPACING = 28;
 const HANDLE_START_Y = 60;
 
-const PROMPT_HANDLE = (id: string) => `handle-${id}-prompt`;
-const IMAGE_HANDLE = (id: string, i: number) => `handle-${id}-image-${i}`;
+const PROMPT_HANDLE = (id: string) => `${id}-prompt`;
+const IMAGE_HANDLE = (id: string, i: number) => `${id}-image-${i}`;
+const RESULT_HANDLE = (id: string) => `${id}-result`;
 
 // Separate component per image slot so each has its own targeted subscription
 function ImageSlot({ nodeId, index }: { nodeId: string; index: number }) {
@@ -40,7 +41,6 @@ function ImageSlot({ nodeId, index }: { nodeId: string; index: number }) {
 export function LLMNode(props: NodeProps<LLMRFNode>) {
   const updateNodeInternals = useUpdateNodeInternals();
 
-  // Each of these is a targeted subscription — zero unnecessary re-renders
   const promptInput = useNodeInput(props.id, PROMPT_HANDLE(props.id));
   const promptText = promptInput?.text ?? "";
 
@@ -60,14 +60,14 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
   const handles = [
     {
       text: "Prompt",
-      id: `${props.id}-prompt`,
+      id: PROMPT_HANDLE(props.id),
       position: Position.Left,
       type: "target" as const,
       style: { top: HANDLE_START_Y, background: "#f1a0fa" },
     },
     ...Array.from({ length: imageInputCount }, (_, i) => ({
       text: `Reference Image ${i + 1}`,
-      id: `${props.id}-image-${i}`,
+      id: IMAGE_HANDLE(props.id, i),
       position: Position.Left,
       type: "target" as const,
       style: {
@@ -77,7 +77,7 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
     })),
     {
       text: "Result",
-      id: `${props.id}-result`,
+      id: RESULT_HANDLE(props.id),
       position: Position.Right,
       type: "source" as const,
       style: { top: "50%", background: "#45a08a" },
@@ -86,12 +86,13 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
 
   return (
     <BaseNode<LLMNodeData> {...props} handles={handles}>
-      {() => (
+      {({ selected }) => (
         <NodeShell
           title="Run LLM"
           icon={<span className="text-base">🤖</span>}
-          className="h-96"
+          className="h-96 w-84"
           nodeId={props?.id}
+          selected={selected ?? props.selected}
         >
           {/* Model selector */}
           <Popover open={comboOpen} onOpenChange={setComboOpen}>
@@ -190,4 +191,3 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
     </BaseNode>
   );
 }
-

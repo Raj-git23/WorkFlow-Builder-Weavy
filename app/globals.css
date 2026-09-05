@@ -143,3 +143,48 @@
   }
 }
 
+/* Custom ReactCrop Styling matching Weavy UI (Greenish accent & stable grid) */
+.ReactCrop__crop-selection {
+  border: 1.5px solid #f7ffa8 !important;
+  animation: none !important;
+  box-shadow: 0 0 0 9999em rgba(0, 0, 0, 0.65) !important;
+}
+
+.ReactCrop__crop-selection::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    linear-gradient(to right, rgba(247, 255, 168, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(247, 255, 168, 0.35) 1px, transparent 1px);
+  background-size: 33.333% 33.333%;
+}
+
+.ReactCrop__drag-handle {
+  width: 9px !important;
+  height: 9px !important;
+  background-color: #f7ffa8 !important;
+  border: 1px solid #111113 !important;
+  border-radius: 1px !important;
+  opacity: 1 !important;
+}
+
+.ReactCrop__drag-handle:hover {
+  background-color: #ffffff !important;
+}
+
+/* React Flow Node Selection Styling */
+.react-flow__node {
+  outline: none !important;
+}
+
+.react-flow__node.selected .node-shell,
+.react-flow__node.selected > div > .node-shell,
+.node-shell[data-selected="true"] {
+  border-color: #f7ffa8 !important;
+  background-color: #2c2b33 !important;
+  box-shadow: 0 0 0 1px #f7ffa8, 0 0 16px rgba(247, 255, 168, 0.12) !important;
+}
+
+

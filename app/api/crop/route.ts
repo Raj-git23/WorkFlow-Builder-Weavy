@@ -1,6 +1,8 @@
 import { runs, tasks } from "@trigger.dev/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import type { cropImageTask } from "@/trigger/ffmpegtask";
+import path from "path";
+import fs from "fs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,9 +15,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Resolve local upload path to absolute path for reliable disk access in Trigger.dev
+    let resolvedImageUrl = imageUrl;
+    if (typeof imageUrl === "string" && (imageUrl.startsWith("/uploads/") || imageUrl.startsWith("uploads/"))) {
+      const cleanPath = imageUrl.startsWith("/") ? imageUrl.slice(1) : imageUrl;
+      const absPath = path.join(process.cwd(), "public", cleanPath);
+      if (fs.existsSync(absPath)) {
+        resolvedImageUrl = absPath;
+      }
+    }
+
     // Step 1: trigger the task, get back a run handle
     const handle = await tasks.trigger<typeof cropImageTask>("crop-image", {
-      imageUrl,
+      imageUrl: resolvedImageUrl,
       x: x ?? 0,
       y: y ?? 0,
       width: width ?? 100,

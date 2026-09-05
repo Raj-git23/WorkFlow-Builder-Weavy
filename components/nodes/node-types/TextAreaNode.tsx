@@ -29,8 +29,12 @@ export function TextAreaNode(props: NodeProps<TextAreaRFNode>) {
         },
       ]}
     >
-      {({ id, data }) => (
-        <NodeShell title="Prompt" nodeId={props?.id}>
+      {({ id, data, selected }) => (
+        <NodeShell
+          title="Prompt"
+          nodeId={props?.id}
+          selected={selected ?? props.selected}
+        >
           <Textarea
             id={`textarea-${id}`}
             name="text"
