@@ -8,6 +8,7 @@ import { PreviewArea } from "@/components/nodes/PreviewArea";
 import { ExtractFrameNodeData, ExtractFrameRFNode } from "@/types/nodetype";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { secondsToTimecode, timecodeToSeconds, frameToTimecode } from "@/lib/helper";
 import { useFlowStore, useNodeInput } from "@/store/useFlowStore";
 
@@ -128,9 +129,10 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Extract failed");
 
-      setFrameUrl(data.dataUrl);
+      const finalUrl = data.url || data.dataUrl;
+      setFrameUrl(data.dataUrl || finalUrl);
       setStatus("done");
-      setOutput(props.id, { imageUrl: data.dataUrl });
+      setOutput(props.id, { imageUrl: finalUrl });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
       setStatus("error");
@@ -154,12 +156,18 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
     },
   ];
 
+  const isRunning = status === "running";
+
   return (
     <BaseNode<ExtractFrameNodeData> {...props} handles={handles}>
       {({ selected }) => (
         <NodeShell
           title="Extract Video Frame"
-          className="h-auto w-84"
+          className={cn(
+            "h-auto w-84 transition-all duration-300",
+            isRunning &&
+              "animate-pulse ring-2 ring-yellow-bg shadow-[0_0_30px_rgba(247,255,168,0.4)] border-yellow-bg"
+          )}
           nodeId={props?.id}
           selected={selected ?? props.selected}
         >
@@ -186,7 +194,7 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
                 Connect a video node to preview
               </div>
             )}
-            {status === "running" && (
+            {isRunning && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
                 <Loader2 size={24} className="animate-spin text-white" />
               </div>
@@ -204,7 +212,8 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
                 min={0}
                 value={frame}
                 onChange={(e) => handleFrameChange(Number(e.target.value))}
-                className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0"
+                disabled={isRunning}
+                className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 disabled:opacity-50"
               />
             </div>
 
@@ -217,7 +226,8 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
                 placeholder="00:00:00"
                 value={timecode}
                 onChange={(e) => handleTimecodeChange(e.target.value)}
-                className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto font-mono border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0"
+                disabled={isRunning}
+                className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto font-mono border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 disabled:opacity-50"
               />
             </div>
           </div>
@@ -230,10 +240,10 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
             variant="outline"
             size="sm"
             onClick={runExtract}
-            disabled={!videoUrl || status === "running"}
+            disabled={!videoUrl || isRunning}
             className="nodrag w-full gap-1.5 text-sm border-sidebar-border py-5 bg-yellow-bg text-black hover:bg-yellow-bg/80 hover:text-black disabled:opacity-40 mt-2"
           >
-            {status === "running" ? (
+            {isRunning ? (
               <>
                 <Loader2 size={11} className="animate-spin" /> Extracting…
               </>

@@ -18,10 +18,12 @@ function UploadContent({
   nodeId,
   fileType,
   savedUrl,
+  onUploadingChange,
 }: {
   nodeId: string;
   fileType: "image" | "video";
   savedUrl?: string;
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const setOutput = useFlowStore((s) => s.setOutput);
   const { upload, status, error: uploadError, reset } = useTransloaditUpload(fileType);
@@ -39,6 +41,10 @@ function UploadContent({
   const lastInputRef = useRef<File | string | null>(null);
 
   const isUploading = status === "uploading";
+
+  useEffect(() => {
+    onUploadingChange?.(isUploading);
+  }, [isUploading, onUploadingChange]);
 
   // Cleanup object URL on unmount
   useEffect(() => {
@@ -211,7 +217,7 @@ function UploadContent({
             </div>
           )}
 
-          {/* Media Preview (No letterboxing checkered bars on video) */}
+          {/* Media Preview */}
           {fileType === "image" ? (
             <img
               src={previewUrl}
@@ -306,6 +312,8 @@ function UploadContent({
 
 // Upload Image Node
 export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
+  const [isUploading, setIsUploading] = useState(false);
+
   return (
     <BaseNode<UploadNodeData>
       {...props}
@@ -320,11 +328,20 @@ export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
       {({ id, data, selected }) => (
         <NodeShell
           title="Upload Image"
-          className="h-auto w-84"
+          className={cn(
+            "h-auto w-84 transition-all duration-300",
+            isUploading &&
+              "animate-pulse ring-2 ring-yellow-bg shadow-[0_0_30px_rgba(247,255,168,0.4)] border-yellow-bg"
+          )}
           nodeId={props?.id}
           selected={selected ?? props.selected}
         >
-          <UploadContent nodeId={id} fileType="image" savedUrl={data.url} />
+          <UploadContent
+            nodeId={id}
+            fileType="image"
+            savedUrl={data.url}
+            onUploadingChange={setIsUploading}
+          />
         </NodeShell>
       )}
     </BaseNode>
@@ -333,6 +350,8 @@ export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
 
 // Upload Video Node
 export function UploadVideoNode(props: NodeProps<UploadVideoRFNode>) {
+  const [isUploading, setIsUploading] = useState(false);
+
   return (
     <BaseNode<UploadNodeData>
       {...props}
@@ -347,11 +366,20 @@ export function UploadVideoNode(props: NodeProps<UploadVideoRFNode>) {
       {({ id, data, selected }) => (
         <NodeShell
           title="Upload Video"
-          className="h-auto w-84"
+          className={cn(
+            "h-auto w-84 transition-all duration-300",
+            isUploading &&
+              "animate-pulse ring-2 ring-yellow-bg shadow-[0_0_30px_rgba(247,255,168,0.4)] border-yellow-bg"
+          )}
           nodeId={props?.id}
           selected={selected ?? props.selected}
         >
-          <UploadContent nodeId={id} fileType="video" savedUrl={data.url} />
+          <UploadContent
+            nodeId={id}
+            fileType="video"
+            savedUrl={data.url}
+            onUploadingChange={setIsUploading}
+          />
         </NodeShell>
       )}
     </BaseNode>

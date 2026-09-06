@@ -44,7 +44,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ dataUrl: result.output.dataUrl });
+    return NextResponse.json({
+      url: result.output.url || result.output.dataUrl,
+      dataUrl: result.output.dataUrl,
+    });
   } catch (err) {
     console.error("Crop route error:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

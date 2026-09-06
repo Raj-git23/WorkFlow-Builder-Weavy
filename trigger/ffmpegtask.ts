@@ -112,6 +112,68 @@ function runFfmpeg(cmd: Ffmpeg.FfmpegCommand): Promise<void> {
   });
 }
 
+import { Transloadit } from "transloadit";
+
+// Uploads processed media to Transloadit (and persists local copy)
+async function uploadToTransloadit(filePath: string): Promise<{ url: string; dataUrl: string }> {
+  const dataUrl = await readAsBase64(filePath);
+  const ext = path.extname(filePath).slice(1) || "jpg";
+  const fileName = `processed-${Date.now()}.${ext}`;
+
+  // 1. Save to public/uploads/ for fast, reliable local access
+  const candidates = [
+    path.join(process.cwd(), "public", "uploads"),
+    path.resolve(__dirname, "../../public/uploads"),
+    path.resolve(__dirname, "../public/uploads"),
+  ];
+
+  let localUrl = `/uploads/${fileName}`;
+  for (const uploadsDir of candidates) {
+    try {
+      await fs.mkdir(uploadsDir, { recursive: true });
+      await fs.copyFile(filePath, path.join(uploadsDir, fileName));
+      break;
+    } catch {
+      // Continue to next candidate
+    }
+  }
+
+  let transloaditUrl: string | null = null;
+
+  // 2. Upload via Transloadit if credentials exist
+  if (process.env.TRANSLOADIT_AUTH_KEY && process.env.TRANSLOADIT_AUTH_SECRET) {
+    try {
+      const transloadit = new Transloadit({
+        authKey: process.env.TRANSLOADIT_AUTH_KEY,
+        authSecret: process.env.TRANSLOADIT_AUTH_SECRET,
+      });
+
+      const result = await transloadit.createAssembly({
+        files: { file: filePath },
+        params: {
+          template_id: "8f13d0d783bd4a07a321ab42ce804b0a",
+        },
+        waitForCompletion: true,
+      });
+
+      const allStepResults = Object.values(result.results ?? {}).flat();
+      const validStep = allStepResults.find(
+        (r: any) => r?.ssl_url && !r.ssl_url.includes("/scratch/")
+      );
+      if (validStep?.ssl_url) {
+        transloaditUrl = validStep.ssl_url;
+      }
+    } catch (tlErr) {
+      console.warn("Transloadit output upload notice:", tlErr);
+    }
+  }
+
+  return {
+    url: transloaditUrl || localUrl,
+    dataUrl,
+  };
+}
+
 // Crop Image Task (FFmpeg filter evaluates input dimensions natively via iw & ih)
 export const cropImageTask = task({
   id: "crop-image",
@@ -137,9 +199,9 @@ export const cropImageTask = task({
         .output(output)
     );
 
-    const dataUrl = await readAsBase64(output);
+    const { url, dataUrl } = await uploadToTransloadit(output);
     await cleanup(input, output);
-    return { dataUrl };
+    return { dataUrl, url };
   },
 });
 
@@ -166,8 +228,8 @@ export const extractFrameTask = task({
         .outputOptions(["-q:v 2"])
     );
 
-    const dataUrl = await readAsBase64(output);
+    const { url, dataUrl } = await uploadToTransloadit(output);
     await cleanup(input, output);
-    return { dataUrl };
+    return { dataUrl, url };
   },
 });

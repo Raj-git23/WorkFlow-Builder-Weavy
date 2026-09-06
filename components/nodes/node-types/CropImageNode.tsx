@@ -128,10 +128,11 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Crop failed");
 
-      setResultUrl(data.dataUrl);
+      const finalUrl = data.url || data.dataUrl;
+      setResultUrl(data.dataUrl || finalUrl);
       setStatus("done");
 
-      setOutput(props.id, { imageUrl: data.dataUrl });
+      setOutput(props.id, { imageUrl: finalUrl });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
       setStatus("error");
@@ -155,12 +156,18 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
     },
   ];
 
+  const isRunning = status === "running";
+
   return (
     <BaseNode<CropNodeData> {...props} handles={handles}>
       {({ selected }) => (
         <NodeShell
           title="Crop"
-          className="h-auto w-84"
+          className={cn(
+            "h-auto w-84 transition-all duration-300",
+            isRunning &&
+              "animate-pulse ring-2 ring-yellow-bg shadow-[0_0_30px_rgba(247,255,168,0.4)] border-yellow-bg"
+          )}
           nodeId={props?.id}
           selected={selected ?? props.selected}
         >
@@ -175,6 +182,7 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
                   crop={crop}
                   onChange={handleCropChange}
                   aspect={aspectNum}
+                  disabled={isRunning}
                   className="w-full"
                 >
                   <img
@@ -191,7 +199,7 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
               </div>
             )}
 
-            {status === "running" && (
+            {isRunning && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
                 <Loader2 size={24} className="animate-spin text-white" />
               </div>
@@ -209,6 +217,7 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
                   variant="outline"
                   role="combobox"
                   aria-expanded={comboOpen}
+                  disabled={isRunning}
                   className="nodrag flex-1 justify-between border-sidebar-border bg-[#1c1b1f] p-2 h-auto text-xs text-sidebar-foreground hover:bg-white/5 hover:text-sidebar-foreground"
                 >
                   {aspectRatio}
@@ -255,6 +264,7 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
               variant="ghost"
               size="sm"
               onClick={handleReset}
+              disabled={isRunning}
               className="nodrag h-auto px-2 py-1 text-[11px] text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-transparent shrink-0"
             >
               Reset
@@ -283,7 +293,8 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
                     max={100}
                     value={Math.round(value)}
                     onChange={(e) => set(Number(e.target.value))}
-                    className="nodrag px-2.5 py-1 text-xs border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                    disabled={isRunning}
+                    className="nodrag px-2.5 py-1 text-xs border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50"
                   />
                 </div>
               ))}
@@ -308,7 +319,8 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
                     max={100}
                     value={Math.round(value)}
                     onChange={(e) => set(Number(e.target.value))}
-                    className="nodrag h-auto px-1.5 py-1 border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+                    disabled={isRunning}
+                    className="nodrag h-auto px-1.5 py-1 border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-50"
                   />
                 </div>
               ))}
@@ -317,6 +329,7 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
                 variant="ghost"
                 size="icon"
                 onClick={() => setLinked((link) => !link)}
+                disabled={isRunning}
                 title="Lock W/H ratio"
                 className={cn(
                   "nodrag h-auto w-auto p-2 hover:bg-button-hover hover:cursor-pointer hover:text-sidebar-foreground ml-auto",
@@ -338,10 +351,10 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
             variant="outline"
             size="sm"
             onClick={runCrop}
-            disabled={!activeImage || status === "running"}
+            disabled={!activeImage || isRunning}
             className="nodrag w-full rounded-sm gap-1.5 text-sm border-sidebar-border bg-yellow-bg py-5 text-black hover:bg-yellow-bg/80 hover:text-black disabled:opacity-40 mt-2"
           >
-            {status === "running" ? (
+            {isRunning ? (
               <>
                 <Loader2 size={11} className="animate-spin" /> Cropping…
               </>

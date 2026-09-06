@@ -35,6 +35,7 @@ import { MAX_HISTORY } from "@/lib/constant";
 import { getEdgeStyle } from "@/lib/edge-style";
 import { DEFAULT_DATA } from "@/lib/nodesConfig";
 import { useFlowStore } from "@/store/useFlowStore";
+import { Input } from "../ui/input";
 
 //  Canvas
 
@@ -42,6 +43,7 @@ export function Canvas() {
   const [toolMode, setToolMode] = useState<ToolMode>("selection");
   const { screenToFlowPosition, getNode } = useReactFlow();
 
+  const [titleName, setTitleName] = useState<string>("My First Workflow");
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
@@ -325,15 +327,13 @@ export function Canvas() {
 
   return (
     <NodeActionsContext.Provider value={{ duplicateNode, deleteNode }}>
-      <main>
-        <div className="absolute h-full z-10">
-          <LeftSidebar
-            onAddNode={handleAddNode}
-            onDragStart={handleDragStart}
-          />
-        </div>
+      <main className="flex h-screen w-screen overflow-hidden">
+        <LeftSidebar
+          onAddNode={handleAddNode}
+          onDragStart={handleDragStart}
+        />
 
-        <div style={{ height: "100vh", width: "100vw" }}>
+        <div className="flex-1 h-full w-full relative">
           <ReactFlow
             minZoom={0.1}
             maxZoom={4}
@@ -365,6 +365,26 @@ export function Canvas() {
                 canUndo={past.length > 0}
                 canRedo={future.length > 0}
               />
+            </Panel>
+
+            <Panel position="top-left" className=" mt-4">
+              <div className="flex flex-col items-center gap-2 rounded-md border border-sidebar-border py-2 bg-sidebar-background shadow-lg">
+                <Input
+                  type="text"
+                  value={titleName}
+                  onChange={(e) => setTitleName(e.target.value)}
+                  className="text-sidebar-foreground bg-transparent border-none! text-[13px]! font-medium font-inter! focus-visible:ring-0!"
+                />
+              </div>
+            </Panel>
+
+            <Panel position="top-right" className="mr-4 mt-4">
+              <div className="flex flex-col items-center gap-2 rounded-md border border-sidebar-border bg-sidebar-background px-2 py-1.5 shadow-lg text-sm font-dmsans">
+                <div className="text-sidebar-foreground">Zoom</div>
+                <div className="text-sidebar-foreground">
+                  Hiii
+                </div>
+              </div>
             </Panel>
 
             <Background color="#253042" bgColor="#0a0a0a" gap={13} />
