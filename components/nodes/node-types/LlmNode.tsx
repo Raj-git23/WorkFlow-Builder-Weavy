@@ -19,7 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { MODELS } from "@/lib/constant";
-import { useFlowStore, useNodeInput } from "@/store/useFlowStore";
+import { useFlowStore, useNodeInput, useIsNodeRunning } from "@/store/useFlowStore";
 import { MarkdownView } from "@/components/ui/markdown-view";
 
 const HANDLE_SPACING = 28;
@@ -221,7 +221,16 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
     },
   ];
 
-  const isRunning = status === "running";
+  const isGloballyRunning = useIsNodeRunning(props.id);
+  const isRunning = status === "running" || isGloballyRunning;
+
+  const nodeOutput = useFlowStore((s) => s.outputs[props.id]);
+  useEffect(() => {
+    if (nodeOutput?.text && nodeOutput.text !== resultText) {
+      setResultText(nodeOutput.text);
+      setStatus("done");
+    }
+  }, [nodeOutput?.text, resultText]);
 
   return (
     <BaseNode<LLMNodeData> {...props} handles={handles}>

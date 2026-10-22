@@ -1,6 +1,6 @@
 // components/nodes/CropImgNode.tsx
 import { type NodeProps, Position } from "@xyflow/react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { ChevronsUpDown as ChevronsUpDownIcon, Check as CheckIcon, Play, Loader2, Link2, Link2Off } from "lucide-react";
 import { NodeShell } from "@/components/nodes/NodeShell";
 import { BaseNode } from "@/components/nodes/BaseNode";
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ASPECT_MAP, ASPECT_RATIOS } from "@/lib/constant";
 import { round } from "@/lib/helper";
-import { useFlowStore, useNodeInput } from "@/store/useFlowStore";
+import { useFlowStore, useNodeInput, useIsNodeRunning } from "@/store/useFlowStore";
 import ReactCrop, { type Crop as ReactCropType } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -156,7 +156,16 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
     },
   ];
 
-  const isRunning = status === "running";
+  const isGloballyRunning = useIsNodeRunning(props.id);
+  const isRunning = status === "running" || isGloballyRunning;
+
+  const nodeOutput = useFlowStore((s) => s.outputs[props.id]);
+  useEffect(() => {
+    if (nodeOutput?.imageUrl && nodeOutput.imageUrl !== resultUrl) {
+      setResultUrl(nodeOutput.imageUrl);
+      setStatus("done");
+    }
+  }, [nodeOutput?.imageUrl, resultUrl]);
 
   return (
     <BaseNode<CropNodeData> {...props} handles={handles}>

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ACCEPT } from "@/lib/constant";
-import { useFlowStore } from "@/store/useFlowStore";
+import { useFlowStore, useIsNodeRunning } from "@/store/useFlowStore";
 import { useTransloaditUpload } from "@/lib/useTransloaditUpload";
 import { validateFile, validateUrl, extractFileName } from "@/lib/fileValidation";
 
@@ -313,6 +313,8 @@ function UploadContent({
 // Upload Image Node
 export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
   const [isUploading, setIsUploading] = useState(false);
+  const isGloballyRunning = useIsNodeRunning(props.id);
+  const isRunning = isUploading || isGloballyRunning;
 
   return (
     <BaseNode<UploadNodeData>
@@ -330,7 +332,7 @@ export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
           title="Upload Image"
           className={cn(
             "h-auto w-84 transition-all duration-300",
-            isUploading &&
+            isRunning &&
               "animate-pulse ring-2 ring-yellow-bg shadow-[0_0_30px_rgba(247,255,168,0.4)] border-yellow-bg"
           )}
           nodeId={props?.id}
@@ -351,6 +353,8 @@ export function UploadImageNode(props: NodeProps<UploadImageRFNode>) {
 // Upload Video Node
 export function UploadVideoNode(props: NodeProps<UploadVideoRFNode>) {
   const [isUploading, setIsUploading] = useState(false);
+  const isGloballyRunning = useIsNodeRunning(props.id);
+  const isRunning = isUploading || isGloballyRunning;
 
   return (
     <BaseNode<UploadNodeData>
@@ -368,7 +372,7 @@ export function UploadVideoNode(props: NodeProps<UploadVideoRFNode>) {
           title="Upload Video"
           className={cn(
             "h-auto w-84 transition-all duration-300",
-            isUploading &&
+            isRunning &&
               "animate-pulse ring-2 ring-yellow-bg shadow-[0_0_30px_rgba(247,255,168,0.4)] border-yellow-bg"
           )}
           nodeId={props?.id}

@@ -1,5 +1,4 @@
-// components/nodes/ExtractFrameNode.tsx
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { type NodeProps, Position } from "@xyflow/react";
 import { Play, Loader2 } from "lucide-react";
 import { NodeShell } from "@/components/nodes/NodeShell";
@@ -10,14 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { secondsToTimecode, timecodeToSeconds, frameToTimecode } from "@/lib/helper";
-import { useFlowStore, useNodeInput } from "@/store/useFlowStore";
+import { useFlowStore, useNodeInput, useIsNodeRunning } from "@/store/useFlowStore";
 
 const VIDEO_IN_HANDLE = (id: string) => `${id}-video-in`;
+const TIMESTAMP_IN_HANDLE = (id: string) => `${id}-timestamp-in`;
 const FRAME_OUT_HANDLE = (id: string) => `${id}-frame-out`;
 
 export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
   const input = useNodeInput(props.id, VIDEO_IN_HANDLE(props.id));
   const videoUrl = input?.videoUrl;
+
+  const timestampInput = useNodeInput(props.id, TIMESTAMP_IN_HANDLE(props.id));
+  const connectedTimestamp = timestampInput?.text;
 
   const setOutput = useFlowStore((s) => s.setOutput);
 
@@ -112,8 +115,20 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
     try {
       let timestampInSeconds = (frame || 0) / 30;
 
-      // Clamp timestamp to video duration if known
-      if (durationRef.current > 0 && timestampInSeconds > durationRef.current) {
+      // If connected to an upstream timestamp node (e.g. Text node with "50%" or seconds)
+      if (connectedTimestamp) {
+        const trimmed = connectedTimestamp.trim();
+        if (trimmed.endsWith("%")) {
+          const pct = parseFloat(trimmed) / 100;
+          if (durationRef.current > 0) {
+            timestampInSeconds = durationRef.current * pct;
+          }
+        } else {
+          const val = parseFloat(trimmed);
+          if (!isNaN(val)) timestampInSeconds = val;
+        }
+      } else if (durationRef.current > 0 && timestampInSeconds > durationRef.current) {
+        // Clamp timestamp to video duration if known
         timestampInSeconds = durationRef.current;
       }
 
@@ -137,15 +152,22 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
       setError(err instanceof Error ? err.message : "Unknown error");
       setStatus("error");
     }
-  }, [videoUrl, frame, props.id, setOutput]);
+  }, [videoUrl, frame, connectedTimestamp, props.id, setOutput]);
 
   const handles = [
     {
-      text: "Video",
+      text: "Video*",
       id: VIDEO_IN_HANDLE(props.id),
       position: Position.Left,
       type: "target" as const,
-      style: { background: "#45a08a" },
+      style: { background: "#ea8362" },
+    },
+    {
+      text: "Timestamp",
+      id: TIMESTAMP_IN_HANDLE(props.id),
+      position: Position.Left,
+      type: "target" as const,
+      style: { top: "82%", background: "#f1a0fa" },
     },
     {
       text: "Frame",
@@ -156,7 +178,16 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
     },
   ];
 
-  const isRunning = status === "running";
+  const isGloballyRunning = useIsNodeRunning(props.id);
+  const isRunning = status === "running" || isGloballyRunning;
+
+  const nodeOutput = useFlowStore((s) => s.outputs[props.id]);
+  useEffect(() => {
+    if (nodeOutput?.imageUrl && nodeOutput.imageUrl !== frameUrl) {
+      setFrameUrl(nodeOutput.imageUrl);
+      setStatus("done");
+    }
+  }, [nodeOutput?.imageUrl, frameUrl]);
 
   return (
     <BaseNode<ExtractFrameNodeData> {...props} handles={handles}>
@@ -202,35 +233,44 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
           </PreviewArea>
 
           {/* Bidirectional Frame & Timecode Controls (HH:MM:SS format) */}
-          <div className="flex w-full items-center justify-between gap-2 mt-2 border-b border-button-hover pb-2">
-            <div className="flex items-center gap-1.5 flex-1">
-              <span className="text-sidebar-foreground font-medium text-xs shrink-0">
-                Frame
+          {connectedTimestamp ? (
+            <div className="flex w-full items-center justify-between gap-2 mt-2 border-b border-button-hover pb-2 px-1">
+              <span className="text-[#f1a0fa] font-medium text-[11px]">Timestamp (Connected):</span>
+              <span className="font-mono text-sidebar-foreground bg-[#1c1b1f] px-2.5 py-1 rounded-sm border border-sidebar-border text-xs">
+                {connectedTimestamp}
               </span>
-              <Input
-                type="number"
-                min={0}
-                value={frame}
-                onChange={(e) => handleFrameChange(Number(e.target.value))}
-                disabled={isRunning}
-                className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 disabled:opacity-50"
-              />
             </div>
+          ) : (
+            <div className="flex w-full items-center justify-between gap-2 mt-2 border-b border-button-hover pb-2">
+              <div className="flex items-center gap-1.5 flex-1">
+                <span className="text-sidebar-foreground font-medium text-xs shrink-0">
+                  Frame
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={frame}
+                  onChange={(e) => handleFrameChange(Number(e.target.value))}
+                  disabled={isRunning}
+                  className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 disabled:opacity-50"
+                />
+              </div>
 
-            <div className="flex items-center gap-1.5 flex-1">
-              <span className="text-sidebar-foreground/90 font-medium text-xs shrink-0">
-                Timecode
-              </span>
-              <Input
-                type="text"
-                placeholder="00:00:00"
-                value={timecode}
-                onChange={(e) => handleTimecodeChange(e.target.value)}
-                disabled={isRunning}
-                className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto font-mono border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 disabled:opacity-50"
-              />
+              <div className="flex items-center gap-1.5 flex-1">
+                <span className="text-sidebar-foreground/90 font-medium text-xs shrink-0">
+                  Timecode
+                </span>
+                <Input
+                  type="text"
+                  placeholder="00:00:00"
+                  value={timecode}
+                  onChange={(e) => handleTimecodeChange(e.target.value)}
+                  disabled={isRunning}
+                  className="nodrag w-full rounded-sm text-xs px-2 py-1 h-auto font-mono border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground focus-visible:ring-0 disabled:opacity-50"
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Error Message */}
           {error && <p className="text-[11px] text-red-400 mt-1">{error}</p>}
