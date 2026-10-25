@@ -317,16 +317,15 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
           if (loadedNodes.length > 0) {
             setNodes(loadedNodes);
             nodesRef.current = loadedNodes;
+            setTimeout(() => {
+              fitView({ padding: 0.2, duration: 400, maxZoom: 1 });
+            }, 150);
           }
           if (loadedEdges.length > 0) {
             setEdges(loadedEdges);
             edgesRef.current = loadedEdges;
             syncEdges(loadedEdges);
           }
-
-          setTimeout(() => {
-            fitView({ padding: 0.2, duration: 400 });
-          }, 150);
         }
       } catch (err) {
         console.warn("Notice loading initial workflow:", err);
@@ -496,7 +495,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
     setWorkflowId(null); // Fresh copy will auto-save under user's account
 
     setTimeout(() => {
-      fitView({ padding: 0.15, duration: 600 });
+      fitView({ padding: 0.15, duration: 600, maxZoom: 1 });
       saveWorkflow(PRODUCT_MARKETING_KIT_TEMPLATE.name);
     }, 200);
 
@@ -533,9 +532,11 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
       syncEdges(loadedEdges);
       setSaveStatus("saved");
 
-      setTimeout(() => {
-        fitView({ padding: 0.15, duration: 600 });
-      }, 150);
+      if (loadedNodes.length > 0) {
+        setTimeout(() => {
+          fitView({ padding: 0.15, duration: 600, maxZoom: 1 });
+        }, 150);
+      }
 
       toast.success(`Loaded "${wf.name || "Workflow"}"`);
     },
@@ -826,6 +827,9 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
           <ReactFlow
             minZoom={0.1}
             maxZoom={4}
+            defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+            fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
+            zoomOnDoubleClick={false}
             nodes={nodes}
             edges={edges}
             nodeTypes={nodeTypes}

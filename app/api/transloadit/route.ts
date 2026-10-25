@@ -13,6 +13,40 @@ const TEMPLATES = {
   video: "9b519e0bf3764fe4989aca5985da7b14",
 };
 
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const fileType = searchParams.get("fileType") || "image";
+
+    const authKey =
+      process.env.TRANSLOADIT_AUTH_KEY ||
+      process.env.TRANSLOADIT_KEY ||
+      process.env.NEXT_PUBLIC_TRANSLOADIT_KEY;
+    const authSecret =
+      process.env.TRANSLOADIT_AUTH_SECRET ||
+      process.env.TRANSLOADIT_SECRET;
+
+    if (!authKey || !authSecret) {
+      return NextResponse.json(
+        { error: "Transloadit credentials not configured" },
+        { status: 500 }
+      );
+    }
+
+    const transloadit = new Transloadit({ authKey, authSecret });
+    const { signature, params } = transloadit.calcSignature({
+      template_id: TEMPLATES[fileType as keyof typeof TEMPLATES] ?? TEMPLATES.image,
+    } as any);
+
+    return NextResponse.json({ signature, params });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err?.message || "Failed to generate Transloadit upload signature" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   let tmpPath: string | null = null;
 

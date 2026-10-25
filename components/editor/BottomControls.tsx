@@ -39,7 +39,7 @@ export function BottomControls({
   };
 
   const handleFitView = () => {
-    fitView({ padding: 0.2, duration: 200 });
+    fitView({ padding: 0.2, duration: 200, maxZoom: 1 });
     setZoomDropdownOpen(false);
   };
 
