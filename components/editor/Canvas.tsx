@@ -51,6 +51,8 @@ import {
   Cloud,
   FolderOpen,
   ChevronDown,
+  ChevronLeft,
+  Folder,
   Plus,
   Sparkles,
   Trash2,
@@ -64,6 +66,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { PRODUCT_MARKETING_KIT_TEMPLATE } from "@/lib/starter-template";
+import Link from "next/link";
 import UserData from "@/components/auth/UserData";
 import { cn } from "@/lib/utils";
 import { errorHandler } from "@/lib/error-handler";
@@ -72,7 +75,11 @@ import SidebarHistory from "./SidebarHistory";
 
 //  Canvas
 
-export function Canvas() {
+export interface CanvasProps {
+  initialWorkflowId?: string;
+}
+
+export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   const [toolMode, setToolMode] = useState<ToolMode>("selection");
   const { screenToFlowPosition, getNode, fitView } = useReactFlow();
 
@@ -278,21 +285,33 @@ export function Canvas() {
   useEffect(() => {
     async function loadWorkflow() {
       try {
-        const res = await fetch("/api/workflows");
-        if (!res.ok) return;
+        let targetWorkflow: any = null;
 
-        const data = await res.json();
-        const firstWorkflow = data.workflows?.[0];
+        if (initialWorkflowId) {
+          const res = await fetch(`/api/workflows/${initialWorkflowId}`);
+          if (res.ok) {
+            const data = await res.json();
+            targetWorkflow = data.workflow;
+          }
+        }
 
-        if (firstWorkflow) {
-          setWorkflowId(firstWorkflow.id);
-          if (firstWorkflow.name) setTitleName(firstWorkflow.name);
+        if (!targetWorkflow) {
+          const res = await fetch("/api/workflows");
+          if (res.ok) {
+            const data = await res.json();
+            targetWorkflow = data.workflows?.[0];
+          }
+        }
 
-          const loadedNodes = Array.isArray(firstWorkflow.nodes)
-            ? (firstWorkflow.nodes as Node[])
+        if (targetWorkflow) {
+          setWorkflowId(targetWorkflow.id);
+          if (targetWorkflow.name) setTitleName(targetWorkflow.name);
+
+          const loadedNodes = Array.isArray(targetWorkflow.nodes)
+            ? (targetWorkflow.nodes as Node[])
             : [];
-          const loadedEdges = Array.isArray(firstWorkflow.edges)
-            ? (firstWorkflow.edges as Edge[])
+          const loadedEdges = Array.isArray(targetWorkflow.edges)
+            ? (targetWorkflow.edges as Edge[])
             : [];
 
           if (loadedNodes.length > 0) {
@@ -304,6 +323,10 @@ export function Canvas() {
             edgesRef.current = loadedEdges;
             syncEdges(loadedEdges);
           }
+
+          setTimeout(() => {
+            fitView({ padding: 0.2, duration: 400 });
+          }, 150);
         }
       } catch (err) {
         console.warn("Notice loading initial workflow:", err);
@@ -313,7 +336,7 @@ export function Canvas() {
     }
 
     loadWorkflow();
-  }, [setNodes, setEdges, syncEdges]);
+  }, [initialWorkflowId, setNodes, setEdges, syncEdges, fitView]);
 
   // Debounced auto-save on graph / title changes (1.5s after user stops editing)
   useEffect(() => {
@@ -947,16 +970,17 @@ export function Canvas() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Direct Starter Template Button for instant 1-click access */}
-              <Button
-                size="sm"
-                onClick={handleLoadTemplate}
-                className="h-9 px-3 bg-[#212126] hover:bg-[#2e2e36] text-[#f7ffa8] hover:text-white border border-[#33333a] shadow-lg text-xs gap-1.5 font-medium cursor-pointer transition-colors"
-                title="Load Product Marketing Kit Generator (all 6 node types)"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#f7ffa8]" />
-                <span>Starter Template</span>
-              </Button>
+              {/* Back to Files Link */}
+              <Link href="/">
+                <Button
+                  size="sm"
+                  className="h-9 px-3 bg-[#212126] hover:bg-[#2e2e36] text-[#f2f0f8] hover:text-white border border-[#33333a] shadow-lg text-xs gap-1.5 font-medium cursor-pointer transition-colors"
+                  title="Back to Workspace & Files"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 text-[#f7ffa8]" />
+                  <span>My Files</span>
+                </Button>
+              </Link>
 
               {/* Import & Export JSON buttons */}
               <div className="flex items-center gap-1 rounded-md border border-sidebar-border bg-sidebar-background px-1.5 shadow-lg h-9">
