@@ -69,79 +69,112 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Empty file or URL content" }, { status: 400 });
     }
 
-    // 1. Save locally in public/uploads so the media is permanently accessible to Next.js & Trigger.dev
-    const uploadsDir = join(process.cwd(), "public", "uploads");
-    await mkdir(uploadsDir, { recursive: true });
-
     const safeBaseName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const localFileName = `upload-${Date.now()}-${safeBaseName}`;
-    const localFilePath = join(uploadsDir, localFileName);
-    await writeFile(localFilePath, fileBuffer);
+    let localUrl: string | null = null;
+    let localFilePath: string | null = null;
 
-    const localUrl = `/uploads/${localFileName}`;
+    // 1. Try to save locally in public/uploads if running in a writable environment (local dev).
+    // In serverless environments like Vercel Lambda, /var/task is read-only (EROFS), so we gracefully continue.
+    try {
+      const uploadsDir = join(process.cwd(), "public", "uploads");
+      await mkdir(uploadsDir, { recursive: true });
+      const localFileName = `upload-${Date.now()}-${safeBaseName}`;
+      localFilePath = join(uploadsDir, localFileName);
+      await writeFile(localFilePath, fileBuffer);
+      localUrl = `/uploads/${localFileName}`;
+    } catch {
+      // Gracefully ignored on read-only environments like Vercel
+    }
 
-    // 2. Write to temp file for Transloadit SDK processing
+    // 2. Write to temp directory (/tmp) for Transloadit SDK processing (/tmp is always writable on Vercel)
     tmpPath = join(tmpdir(), `tl-src-${Date.now()}-${safeBaseName}`);
     await writeFile(tmpPath, fileBuffer);
 
     let transloaditUrl: string | null = null;
     let mimeType: string = fileType === "image" ? "image/jpeg" : "video/mp4";
 
-    try {
-      const transloadit = new Transloadit({
-        authKey: process.env.TRANSLOADIT_AUTH_KEY!,
-        authSecret: process.env.TRANSLOADIT_AUTH_SECRET!,
-      });
+    const authKey =
+      process.env.TRANSLOADIT_AUTH_KEY ||
+      process.env.TRANSLOADIT_KEY ||
+      process.env.NEXT_PUBLIC_TRANSLOADIT_KEY;
+    const authSecret =
+      process.env.TRANSLOADIT_AUTH_SECRET ||
+      process.env.TRANSLOADIT_SECRET;
 
-      const result = await transloadit.createAssembly({
-        files: {
-          file: tmpPath,
-        },
-        params: {
-          template_id: TEMPLATES[fileType as keyof typeof TEMPLATES] ?? TEMPLATES.image,
-        },
-        waitForCompletion: true,
-      });
+    if (authKey && authSecret) {
+      try {
+        const transloadit = new Transloadit({
+          authKey,
+          authSecret,
+        });
 
-      // Check if assembly had an error or decline
-      if (result.error) {
-        await unlink(localFilePath).catch(() => {});
-        return NextResponse.json(
-          { error: result.message || "File rejected by Transloadit security/validation scan" },
-          { status: 400 }
+        const result = await transloadit.createAssembly({
+          files: {
+            file: tmpPath,
+          },
+          params: {
+            template_id: TEMPLATES[fileType as keyof typeof TEMPLATES] ?? TEMPLATES.image,
+          },
+          waitForCompletion: true,
+        });
+
+        // Check if assembly had an error or decline
+        if (result.error) {
+          if (localFilePath) await unlink(localFilePath).catch(() => {});
+          return NextResponse.json(
+            { error: result.message || "File rejected by Transloadit security/validation scan" },
+            { status: 400 }
+          );
+        }
+
+        const uploads = result.uploads ?? [];
+        const steps = result.results ?? {};
+
+        const allStepResults = Object.values(steps).flat();
+        const validStep = allStepResults.find(
+          (r: any) => r?.ssl_url && !r.ssl_url.includes("/scratch/")
         );
+
+        if (validStep?.ssl_url) {
+          transloaditUrl = validStep.ssl_url;
+          mimeType = validStep.mime || mimeType;
+        } else {
+          const anyResult = allStepResults[0] || uploads[0];
+          if (anyResult?.ssl_url) {
+            transloaditUrl = anyResult.ssl_url;
+          }
+          if (anyResult?.mime) mimeType = anyResult.mime;
+        }
+      } catch (tlErr: any) {
+        console.warn("Transloadit assembly notice:", tlErr);
+        if (tlErr?.message?.includes("ASSEMBLY_EXECUTION_ERROR") || tlErr?.message?.includes("FILTER_DECLINE")) {
+          if (localFilePath) await unlink(localFilePath).catch(() => {});
+          return NextResponse.json(
+            { error: "Invalid video format or file failed security verification" },
+            { status: 400 }
+          );
+        }
       }
+    }
 
-      const uploads = result.uploads ?? [];
-      const steps = result.results ?? {};
+    // 3. Fallback: Generate inline dataUrl for images if cloud upload wasn't available
+    const dataUrlFallback =
+      fileType === "image" && fileBuffer.length < 5 * 1024 * 1024
+        ? `data:${mimeType};base64,${fileBuffer.toString("base64")}`
+        : null;
 
-      // If permanent export step exists (e.g. S3), use that; otherwise use reliable localUrl
-      const allStepResults = Object.values(steps).flat();
-      const validStep = allStepResults.find(
-        (r: any) => r?.ssl_url && !r.ssl_url.includes("/scratch/")
+    const finalUrl = transloaditUrl || localUrl || dataUrlFallback;
+
+    if (!finalUrl) {
+      return NextResponse.json(
+        { error: "Upload failed: Unable to store file. Please ensure Transloadit keys are configured in Vercel." },
+        { status: 500 }
       );
-
-      if (validStep?.ssl_url) {
-        transloaditUrl = validStep.ssl_url;
-        mimeType = validStep.mime || mimeType;
-      } else {
-        const anyResult = allStepResults[0] || uploads[0];
-        if (anyResult?.mime) mimeType = anyResult.mime;
-      }
-    } catch (tlErr: any) {
-      console.warn("Transloadit assembly notice:", tlErr);
-      if (tlErr?.message?.includes("ASSEMBLY_EXECUTION_ERROR") || tlErr?.message?.includes("FILTER_DECLINE")) {
-        await unlink(localFilePath).catch(() => {});
-        return NextResponse.json(
-          { error: "Invalid video format or file failed security verification" },
-          { status: 400 }
-        );
-      }
     }
 
     // Return the reliable permanent URL
     return NextResponse.json({
-      url: transloaditUrl || localUrl,
+      url: finalUrl,
       mimeType,
       name: fileName,
     });
