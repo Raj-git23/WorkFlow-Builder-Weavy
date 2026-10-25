@@ -8,6 +8,7 @@ import {
   ExecutionScope,
   NodeOutputs,
 } from "@/lib/workflow-orchestrator";
+import { errorHandler } from "@/lib/error-handler";
 import type { cropImageTask, extractFrameTask } from "./ffmpegtask";
 import type { geminiTask } from "./geminitask";
 
@@ -24,6 +25,8 @@ export interface OrchestratePayload {
 export const orchestrateWorkflowTask = task({
   id: "orchestrate-workflow",
   maxDuration: 600, // 10 minutes maximum total workflow duration
+  // Modern Trigger.dev concurrency limit
+  concurrency: { total: 2 },
   run: async (payload: OrchestratePayload) => {
     const {
       workflowRunId,
@@ -83,6 +86,7 @@ export const orchestrateWorkflowTask = task({
 
     // Runtime outputs dictionary across tiers
     const completedOutputs: Record<string, NodeOutputs> = {};
+    const newlyExecutedNodeIds = new Set<string>();
 
     let hasFailure = false;
     let failureError: string | null = null;
@@ -128,6 +132,12 @@ export const orchestrateWorkflowTask = task({
                 console.warn(`Failed to save inputs for ${node.id}:`, e);
               }
 
+              // Check if any incoming upstream dependency ran fresh in this execution
+              const hasFreshUpstream = edges.some(
+                (e) => e.target === node.id && newlyExecutedNodeIds.has(e.source)
+              );
+              const nodeData = (node.data || {}) as Record<string, any>;
+
               let nodeResult: NodeOutputs = {};
 
               // Delegate to worker task based on node type
@@ -138,31 +148,59 @@ export const orchestrateWorkflowTask = task({
               } else if (nodeType === "uploadVideo") {
                 nodeResult = { videoUrl: String(taskPayload.videoUrl || "") };
               } else if (nodeType === "cropImage") {
-                const handle = await tasks.trigger<typeof cropImageTask>(
-                  "crop-image",
-                  taskPayload as any
-                );
-                const res = await runs.poll(handle, { pollIntervalMs: 1000 });
-                if (res.status !== "COMPLETED" || !res.output) {
-                  throw new Error(`Crop Image failed: ${res.status}`);
+                // Optimization: reuse existing cropped output if upstream hasn't changed
+                const existingCrop = nodeData.imageUrl || nodeData.url;
+                if (!hasFreshUpstream && existingCrop) {
+                  nodeResult = {
+                    imageUrl: String(existingCrop),
+                    dataUrl: String(existingCrop),
+                  };
+                } else {
+                  const handle = await tasks.trigger<typeof cropImageTask>(
+                    "crop-image",
+                    taskPayload as any
+                  );
+                  const res = await runs.poll(handle, { pollIntervalMs: 1000 });
+                  if (res.status !== "COMPLETED" || !res.output) {
+                    const taskErr =
+                      (res as any)?.error?.message ||
+                      (typeof (res as any)?.error === "string" ? (res as any).error : null) ||
+                      `Crop Image failed: ${res.status}`;
+                    throw new Error(errorHandler.format(taskErr));
+                  }
+                  nodeResult = {
+                    imageUrl: res.output.url,
+                    dataUrl: res.output.dataUrl,
+                  };
+                  newlyExecutedNodeIds.add(node.id);
                 }
-                nodeResult = {
-                  imageUrl: res.output.url,
-                  dataUrl: res.output.dataUrl,
-                };
               } else if (nodeType === "extractFrame") {
-                const handle = await tasks.trigger<typeof extractFrameTask>(
-                  "extract-frame",
-                  taskPayload as any
-                );
-                const res = await runs.poll(handle, { pollIntervalMs: 1000 });
-                if (res.status !== "COMPLETED" || !res.output) {
-                  throw new Error(`Extract Frame failed: ${res.status}`);
+                // Optimization: reuse existing extracted frame if upstream video hasn't changed
+                const existingFrame = nodeData.imageUrl || nodeData.frameUrl;
+                if (!hasFreshUpstream && existingFrame) {
+                  nodeResult = {
+                    imageUrl: String(existingFrame),
+                    dataUrl: String(existingFrame),
+                  };
+                } else {
+                  const handle = await tasks.trigger<typeof extractFrameTask>(
+                    "extract-frame",
+                    taskPayload as any
+                  );
+                  const res = await runs.poll(handle, { pollIntervalMs: 1000 });
+                  if (res.status !== "COMPLETED" || !res.output) {
+                    const taskErr =
+                      (res as any)?.error?.message ||
+                      (typeof (res as any)?.error === "string" ? (res as any).error : null) ||
+                      `Extract Frame failed: ${res.status}`;
+                    throw new Error(errorHandler.format(taskErr));
+                  }
+                  nodeResult = {
+                    imageUrl: res.output.url,
+                    dataUrl: res.output.dataUrl,
+                  };
+                  newlyExecutedNodeIds.add(node.id);
                 }
-                nodeResult = {
-                  imageUrl: res.output.url,
-                  dataUrl: res.output.dataUrl,
-                };
               } else if (nodeType === "llm") {
                 const handle = await tasks.trigger<typeof geminiTask>(
                   "run-gemini",
@@ -170,9 +208,14 @@ export const orchestrateWorkflowTask = task({
                 );
                 const res = await runs.poll(handle, { pollIntervalMs: 1000 });
                 if (res.status !== "COMPLETED" || !res.output) {
-                  throw new Error(`LLM Execution failed: ${res.status}`);
+                  const taskErr =
+                    (res as any)?.error?.message ||
+                    (typeof (res as any)?.error === "string" ? (res as any).error : null) ||
+                    `LLM Execution failed: ${res.status}`;
+                  throw new Error(errorHandler.format(taskErr));
                 }
                 nodeResult = { text: res.output.text };
+                newlyExecutedNodeIds.add(node.id);
               }
 
               // Store output in memory for downstream nodes
@@ -195,7 +238,7 @@ export const orchestrateWorkflowTask = task({
               }
             } catch (nodeErr: any) {
               const durationMs = Date.now() - nodeStart;
-              const errorMsg = nodeErr instanceof Error ? nodeErr.message : String(nodeErr);
+              const errorMsg = errorHandler.format(nodeErr);
               hasFailure = true;
               failureError = errorMsg;
 
@@ -245,8 +288,7 @@ export const orchestrateWorkflowTask = task({
       };
     } catch (workflowErr: any) {
       const totalDuration = Date.now() - startTime;
-      const errorMsg =
-        workflowErr instanceof Error ? workflowErr.message : String(workflowErr);
+      const errorMsg = errorHandler.format(workflowErr);
 
       try {
         await prisma.workflowRun.update({

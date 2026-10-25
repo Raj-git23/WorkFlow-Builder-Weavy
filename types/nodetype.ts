@@ -5,6 +5,8 @@ export type CropNodeData = {
   aspectRatio?: string;
   width?: number;
   height?: number;
+  imageUrl?: string;
+  url?: string;
 };
 
 export type CropRFNode = Node<CropNodeData, "cropImage">;
@@ -12,6 +14,8 @@ export type CropRFNode = Node<CropNodeData, "cropImage">;
 export type ExtractFrameNodeData = {
   frame?: number;
   timecode?: string;
+  imageUrl?: string;
+  frameUrl?: string;
 };
 
 export type ExtractFrameRFNode = Node<ExtractFrameNodeData, "extractFrame">;
@@ -21,12 +25,14 @@ export type LLMNodeData = {
   systemPrompt?: string;
   userMessage?: string;
   imageInputCount?: number;
+  response?: string;
 };
 
 export type LLMRFNode = Node<LLMNodeData, "llm">;
 
 export type UploadNodeData = {
   url?: string;
+  fileName?: string;
   fileType: "image" | "video";
 };
 

@@ -1,6 +1,6 @@
 // components/nodes/UploadNode.tsx
 import { useCallback, useState, useRef, useEffect } from "react";
-import { type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps, Position, useReactFlow } from "@xyflow/react";
 import { Upload, Loader2, AlertCircle, X, RotateCcw, Image as ImageIcon, Film } from "lucide-react";
 import { NodeShell } from "@/components/nodes/NodeShell";
 import { PreviewArea } from "@/components/nodes/PreviewArea";
@@ -26,6 +26,7 @@ function UploadContent({
   onUploadingChange?: (uploading: boolean) => void;
 }) {
   const setOutput = useFlowStore((s) => s.setOutput);
+  const { updateNodeData } = useReactFlow();
   const { upload, status, error: uploadError, reset } = useTransloaditUpload(fileType);
 
   const [dragging, setDragging] = useState(false);
@@ -35,6 +36,18 @@ function UploadContent({
   );
   const [linkValue, setLinkValue] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Sync savedUrl to preview and flow store on initial mount or when workflow is loaded
+  useEffect(() => {
+    if (savedUrl) {
+      setPreviewUrl(savedUrl);
+      setFileName(extractFileName(savedUrl));
+      setOutput(
+        nodeId,
+        fileType === "image" ? { imageUrl: savedUrl } : { videoUrl: savedUrl }
+      );
+    }
+  }, [savedUrl, nodeId, fileType, setOutput]);
 
   // References for cleanup and retry handling
   const objectUrlRef = useRef<string | null>(null);
@@ -63,7 +76,7 @@ function UploadContent({
     }
   }, []);
 
-  // Publish final URL to flow store
+  // Publish final URL to flow store & React Flow node data for persistence
   const publishUrl = useCallback(
     (url: string, name?: string) => {
       setPreviewUrl(url);
@@ -72,8 +85,9 @@ function UploadContent({
         nodeId,
         fileType === "image" ? { imageUrl: url } : { videoUrl: url }
       );
+      updateNodeData(nodeId, { url, fileName: name, fileType });
     },
-    [nodeId, fileType, setOutput]
+    [nodeId, fileType, setOutput, updateNodeData]
   );
 
   const processFile = useCallback(
@@ -187,8 +201,9 @@ function UploadContent({
     setValidationError(null);
     setLinkValue("");
     setOutput(nodeId, {});
+    updateNodeData(nodeId, { url: undefined, fileName: undefined, fileType });
     reset();
-  }, [nodeId, revokeObjectUrl, setOutput, reset]);
+  }, [nodeId, revokeObjectUrl, setOutput, updateNodeData, reset, fileType]);
 
   const currentError = validationError || uploadError;
   const IconComponent = fileType === "image" ? ImageIcon : Film;

@@ -104,7 +104,10 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   const workflowStatus = useFlowStore((s) => s.workflowStatus);
   const currentRunId = useFlowStore((s) => s.currentRunId);
   const setWorkflowStatus = useFlowStore((s) => s.setWorkflowStatus);
-  const setRunningNodes = useFlowStore((s) => s.setRunningNodes);
+  const runningNodeIds = useFlowStore((s) => s.runningNodeIds);
+  const activeRuns = useFlowStore((s) => s.activeRuns);
+  const startRun = useFlowStore((s) => s.startRun);
+  const finishRun = useFlowStore((s) => s.finishRun);
   const setOutputs = useFlowStore((s) => s.setOutputs);
 
   // Controls visibility of the Right History Drawer
@@ -116,12 +119,16 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   const [savedWorkflows, setSavedWorkflows] = useState<
     Array<{ id: string; name: string; updatedAt: string; nodes: any; edges: any }>
   >([]);
+  const [isLoadingWorkflow, setIsLoadingWorkflow] = useState<boolean>(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialWorkflow = useRef(false);
 
   const selectedNodes = nodes.filter((n) => n.selected);
   const selectionAnalysis = analyzeWorkflowSelection(nodes, edges, selectedNodes);
+  const isSelectionRunning =
+    selectedNodes.length > 0 &&
+    selectedNodes.every((n) => runningNodeIds.includes(n.id));
 
   useEffect(() => {
     nodesRef.current = nodes;
@@ -134,26 +141,44 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
 
   const handleRunWorkflow = useCallback(
     async (scope: "FULL" | "SELECTED" = "FULL") => {
-      if (workflowStatus === "running") return;
-
       if (nodesRef.current.length === 0) {
         toast.warning("Add at least one node to run the workflow.");
         return;
       }
 
       const targetSelectedIds =
-        scope === "SELECTED" ? selectedNodes.map((n) => n.id) : [];
+        scope === "SELECTED"
+          ? selectedNodes.map((n) => n.id)
+          : nodesRef.current.map((n) => n.id);
 
-      if (scope === "SELECTED" && targetSelectedIds.length === 0) {
+      if (targetSelectedIds.length === 0) {
         toast.warning("Please select at least one node to run.");
         return;
       }
 
-      setWorkflowStatus("running");
-      const toastId = toast.loading(
+      // Check if all targeted nodes are already running in an active background run
+      const alreadyRunning = targetSelectedIds.every((id) =>
+        runningNodeIds.includes(id)
+      );
+      if (alreadyRunning) {
+        toast.warning("This workflow is already running in the background.");
+        return;
+      }
+
+      // 1. Immediately start pulsating glow for all nodes in this workflow
+      const tempRunId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      startRun(tempRunId, targetSelectedIds);
+
+      // 2. Clear, non-blocking toast indicating workflow started
+      toast.success(
         scope === "SELECTED"
-          ? `Starting run for ${targetSelectedIds.length} selected node(s)...`
-          : "Starting full workflow run..."
+          ? `Workflow started (${targetSelectedIds.length} nodes)!`
+          : "Full workflow started!",
+        {
+          description:
+            "Running in the background. You can continue editing or run other workflows.",
+          duration: 4000,
+        }
       );
 
       try {
@@ -174,12 +199,12 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
         if (!res.ok) throw new Error(data.error ?? "Failed to trigger run");
 
         const { runId } = data;
-        setWorkflowStatus("running", runId);
-        toast.loading("Orchestrator running parallel tasks...", {
-          id: toastId,
-        });
 
-        // Poll execution status
+        // Transition temporary run ID to real server runId while keeping nodes glowing
+        finishRun(tempRunId);
+        startRun(runId, targetSelectedIds);
+
+        // 3. Poll execution status independently for this specific workflow run
         const pollInterval = setInterval(async () => {
           try {
             const statusRes = await fetch(`/api/workflows/runs/${runId}`);
@@ -188,13 +213,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
             const { run } = await statusRes.json();
             if (!run) return;
 
-            // Highlight actively executing nodes with pulsating glow
-            const runningIds = (run.nodeExecutions || [])
-              .filter((ne: any) => ne.status === "RUNNING")
-              .map((ne: any) => ne.nodeId);
-            setRunningNodes(runningIds);
-
-            // Populate completed node outputs live
+            // Live populate completed node outputs
             const completedOutputs: Record<string, any> = {};
             for (const ne of run.nodeExecutions || []) {
               if (ne.status === "COMPLETED" && ne.outputs) {
@@ -208,16 +227,16 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
             // Check terminal state
             if (run.status === "COMPLETED") {
               clearInterval(pollInterval);
-              setWorkflowStatus("completed", runId);
+              finishRun(runId);
               const durationSec = (run.durationMs ? run.durationMs / 1000 : 0).toFixed(1);
               toast.success(`Workflow completed successfully in ${durationSec}s!`, {
-                id: toastId,
+                duration: 5000,
               });
             } else if (run.status === "FAILED") {
               clearInterval(pollInterval);
-              setWorkflowStatus("failed", runId);
+              finishRun(runId);
               toast.error(errorHandler.format(run.error || "Workflow run failed"), {
-                id: toastId,
+                duration: 6000,
               });
             }
           } catch (pollErr) {
@@ -225,13 +244,19 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
           }
         }, 1000);
       } catch (err: any) {
-        setWorkflowStatus("failed");
-        toast.error(errorHandler.format(err), {
-          id: toastId,
-        });
+        finishRun(tempRunId);
+        toast.error(errorHandler.format(err));
       }
     },
-    [workflowStatus, selectedNodes, titleName, setWorkflowStatus, setRunningNodes, setOutputs]
+    [
+      selectedNodes,
+      runningNodeIds,
+      titleName,
+      workflowId,
+      startRun,
+      finishRun,
+      setOutputs,
+    ]
   );
 
   // Keyboard shortcut: Ctrl + Enter / Cmd + Enter to run
@@ -317,6 +342,29 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
           if (loadedNodes.length > 0) {
             setNodes(loadedNodes);
             nodesRef.current = loadedNodes;
+
+            const initialOutputs: Record<string, any> = {};
+            for (const n of loadedNodes) {
+              const d = n.data as any;
+              if (!d) continue;
+              if (n.type === "textArea" && d.value) {
+                initialOutputs[n.id] = { text: d.value };
+              } else if (n.type === "uploadImage" && d.url) {
+                initialOutputs[n.id] = { imageUrl: d.url };
+              } else if (n.type === "uploadVideo" && d.url) {
+                initialOutputs[n.id] = { videoUrl: d.url };
+              } else if (n.type === "cropImage" && (d.imageUrl || d.url)) {
+                initialOutputs[n.id] = { imageUrl: d.imageUrl || d.url };
+              } else if (n.type === "extractFrame" && (d.frameUrl || d.imageUrl)) {
+                initialOutputs[n.id] = { imageUrl: d.frameUrl || d.imageUrl };
+              } else if (n.type === "llm" && (d.response || d.text)) {
+                initialOutputs[n.id] = { text: d.response || d.text };
+              }
+            }
+            if (Object.keys(initialOutputs).length > 0) {
+              setOutputs(initialOutputs);
+            }
+
             setTimeout(() => {
               fitView({ padding: 0.2, duration: 400, maxZoom: 1 });
             }, 150);
@@ -331,11 +379,15 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
         console.warn("Notice loading initial workflow:", err);
       } finally {
         hasLoadedInitialWorkflow.current = true;
+        // Allow canvas nodes to render and fitView to settle before fading out loader
+        setTimeout(() => {
+          setIsLoadingWorkflow(false);
+        }, 400);
       }
     }
 
     loadWorkflow();
-  }, [initialWorkflowId, setNodes, setEdges, syncEdges, fitView]);
+  }, [initialWorkflowId, setNodes, setEdges, syncEdges, setOutputs, fitView]);
 
   // Debounced auto-save on graph / title changes (1.5s after user stops editing)
   useEffect(() => {
@@ -486,6 +538,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   // Load the pre-built Product Marketing Kit Generator starter template
   const handleLoadTemplate = useCallback(() => {
     pushNow();
+    setIsLoadingWorkflow(true);
     setTitleName(PRODUCT_MARKETING_KIT_TEMPLATE.name);
     setNodes(PRODUCT_MARKETING_KIT_TEMPLATE.nodes);
     setEdges(PRODUCT_MARKETING_KIT_TEMPLATE.edges);
@@ -497,7 +550,10 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
     setTimeout(() => {
       fitView({ padding: 0.15, duration: 600, maxZoom: 1 });
       saveWorkflow(PRODUCT_MARKETING_KIT_TEMPLATE.name);
-    }, 200);
+      setTimeout(() => {
+        setIsLoadingWorkflow(false);
+      }, 350);
+    }, 150);
 
     toast.success("Loaded 'Product Marketing Kit Generator' template!");
   }, [pushNow, setNodes, setEdges, syncEdges, fitView, saveWorkflow]);
@@ -521,6 +577,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   const handleSelectWorkflow = useCallback(
     (wf: { id: string; name: string; nodes: any; edges: any }) => {
       pushNow();
+      setIsLoadingWorkflow(true);
       setWorkflowId(wf.id);
       setTitleName(wf.name || "Untitled Workflow");
       const loadedNodes = Array.isArray(wf.nodes) ? wf.nodes : [];
@@ -532,15 +589,41 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
       syncEdges(loadedEdges);
       setSaveStatus("saved");
 
+      const initialOutputs: Record<string, any> = {};
+      for (const n of loadedNodes) {
+        const d = n.data as any;
+        if (!d) continue;
+        if (n.type === "textArea" && d.value) {
+          initialOutputs[n.id] = { text: d.value };
+        } else if (n.type === "uploadImage" && d.url) {
+          initialOutputs[n.id] = { imageUrl: d.url };
+        } else if (n.type === "uploadVideo" && d.url) {
+          initialOutputs[n.id] = { videoUrl: d.url };
+        } else if (n.type === "cropImage" && (d.imageUrl || d.url)) {
+          initialOutputs[n.id] = { imageUrl: d.imageUrl || d.url };
+        } else if (n.type === "extractFrame" && (d.frameUrl || d.imageUrl)) {
+          initialOutputs[n.id] = { imageUrl: d.frameUrl || d.imageUrl };
+        } else if (n.type === "llm" && (d.response || d.text)) {
+          initialOutputs[n.id] = { text: d.response || d.text };
+        }
+      }
+      if (Object.keys(initialOutputs).length > 0) {
+        setOutputs(initialOutputs);
+      }
+
       if (loadedNodes.length > 0) {
         setTimeout(() => {
-          fitView({ padding: 0.15, duration: 600, maxZoom: 1 });
-        }, 150);
+          fitView({ padding: 0.15, duration: 500, maxZoom: 1 });
+        }, 100);
       }
+
+      setTimeout(() => {
+        setIsLoadingWorkflow(false);
+      }, 350);
 
       toast.success(`Loaded "${wf.name || "Workflow"}"`);
     },
-    [pushNow, setNodes, setEdges, syncEdges, fitView]
+    [pushNow, setNodes, setEdges, syncEdges, setOutputs, fitView]
   );
 
   // Delete a saved workflow
@@ -824,6 +907,31 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
         />
 
         <div className="flex-1 h-full w-full relative">
+          {/* Smooth loading overlay when loading or switching workflows */}
+          <div
+            className={cn(
+              "absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#121215]/85 backdrop-blur-md transition-opacity duration-300 select-none",
+              isLoadingWorkflow
+                ? "opacity-100 pointer-events-auto"
+                : "opacity-0 pointer-events-none"
+            )}
+          >
+            <div className="flex flex-col items-center gap-3.5 p-6 rounded-2xl bg-[#1c1c22]/95 border border-[#2b2b35] shadow-2xl">
+              <div className="relative flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full border-2 border-[#f7ffa8]/20 border-t-[#f7ffa8] animate-spin" />
+                <Sparkles className="w-4 h-4 text-[#f7ffa8] absolute animate-pulse" />
+              </div>
+              <div className="flex flex-col items-center gap-1 text-center">
+                <span className="text-xs font-semibold text-neutral-200 tracking-wide">
+                  Loading workflow...
+                </span>
+                <span className="text-[11px] text-neutral-400 font-mono">
+                  Restoring canvas nodes & state
+                </span>
+              </div>
+            </div>
+          </div>
+
           <ReactFlow
             minZoom={0.1}
             maxZoom={4}
@@ -1023,14 +1131,14 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
               {selectedNodes.length > 0 && (
                 <Button
                   size="sm"
-                  disabled={workflowStatus === "running"}
+                  disabled={isSelectionRunning}
                   onClick={() => handleRunWorkflow(selectionAnalysis.scope)}
                   className={cn(
                     "bg-[#f7ffa8] hover:bg-[#ebf495] text-black font-semibold text-xs h-9 px-3.5 gap-1.5 shadow-md transition-all active:scale-95 cursor-pointer",
-                    workflowStatus === "running" && "opacity-80 cursor-not-allowed"
+                    isSelectionRunning && "opacity-80 cursor-not-allowed"
                   )}
                 >
-                  {workflowStatus === "running" ? (
+                  {isSelectionRunning ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       <span>Running...</span>
