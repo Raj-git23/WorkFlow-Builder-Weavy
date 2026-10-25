@@ -10,45 +10,97 @@ interface NodeOutput {
 interface FlowStore {
   outputs: Record<string, NodeOutput>;
   edges: Edge[];
-  setOutput: (nodeId: string, output: NodeOutput) => void;  
+  runningNodeIds: string[];
+  currentRunId: string | null;
+  workflowStatus: "idle" | "running" | "completed" | "failed";
+  setOutput: (nodeId: string, output: NodeOutput) => void;
+  setOutputs: (outputs: Record<string, NodeOutput>) => void;
   setEdges: (edges: Edge[]) => void;
-  getInput: (targetNodeId: string, handleId: string) => NodeOutput | null;     // Returns the source node's output for a specific target handle.
+  setRunningNodes: (nodeIds: string[]) => void;
+  setWorkflowStatus: (status: "idle" | "running" | "completed" | "failed", runId?: string | null) => void;
+  getInput: (targetNodeId: string, handleId?: string) => NodeOutput | null;
 }
-
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
   outputs: {},
   edges: [],
+  runningNodeIds: [],
+  currentRunId: null,
+  workflowStatus: "idle",
 
   setOutput: (nodeId, output) =>
-    set((s) => ({ outputs: { ...s.outputs, [nodeId]: { ...s.outputs[nodeId], ...output } } })),   // setting acc to nodes
+    set((s) => ({
+      outputs: {
+        ...s.outputs,
+        [nodeId]: { ...s.outputs[nodeId], ...output },
+      },
+    })),
 
-  
-  setEdges: (edges) => set({ edges }),    // Replacing edges triggers re-renders only in nodes whose handle is affected
+  setOutputs: (newOutputs) =>
+    set((s) => ({
+      outputs: {
+        ...s.outputs,
+        ...newOutputs,
+      },
+    })),
+
+  setEdges: (edges) => set({ edges }),
+
+  setRunningNodes: (runningNodeIds) => set({ runningNodeIds }),
+
+  setWorkflowStatus: (workflowStatus, currentRunId = null) =>
+    set((s) => ({
+      workflowStatus,
+      currentRunId: currentRunId !== undefined ? currentRunId : s.currentRunId,
+      runningNodeIds: workflowStatus === "running" ? s.runningNodeIds : [],
+    })),
 
   getInput: (targetNodeId, handleId) => {
     const { edges, outputs } = get();
-    const edge = edges.find(
-      (e) => e.target === targetNodeId && e.targetHandle === handleId
-    );
+    const edge = edges.find((e) => {
+      if (e.target !== targetNodeId) return false;
+      if (!handleId) return true;
+      const targetH = e.targetHandle || "";
+      return (
+        targetH === handleId ||
+        targetH === `handle-${handleId}` ||
+        `handle-${targetH}` === handleId ||
+        targetH.endsWith(handleId) ||
+        handleId.endsWith(targetH)
+      );
+    });
 
     if (!edge) return null;
-
-    return outputs[edge?.source] ?? null;
+    return outputs[edge.source] ?? null;
   },
 }));
 
-
-// Targeted selector hooks
-// Each node uses one of these instead of calling getInput() inside render.
-// Zustand only re-renders the subscriber when the specific slice changes.
-
-export function useNodeInput(targetNodeId: string, handleId: string) {
+/**
+ * Targeted selector hook for subscribing to upstream node outputs based on target node ID and handle ID.
+ */
+export function useNodeInput(targetNodeId: string, handleId?: string) {
   return useFlowStore((s) => {
-    const edge = s.edges.find(
-      (e) => e.target === targetNodeId && e.targetHandle === handleId
-    );
+    const edge = s.edges.find((e) => {
+      if (e.target !== targetNodeId) return false;
+      if (!handleId) return true;
+      const targetH = e.targetHandle || "";
+      return (
+        targetH === handleId ||
+        targetH === `handle-${handleId}` ||
+        `handle-${targetH}` === handleId ||
+        targetH.endsWith(handleId) ||
+        handleId.endsWith(targetH)
+      );
+    });
+
     if (!edge) return null;
     return s.outputs[edge.source] ?? null;
   });
+}
+
+/**
+ * Returns whether a specific node is actively executing in a workflow run.
+ */
+export function useIsNodeRunning(nodeId: string) {
+  return useFlowStore((s) => s.runningNodeIds.includes(nodeId));
 }

@@ -1,0 +1,118 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+
+// -------------------------------------------------------------
+// 1. WORKFLOW MODEL (File & Canvas State)
+// -------------------------------------------------------------
+model Workflow {
+  id          String   @id @default(cuid())
+  userId      String   // Clerk User ID
+  name        String   @default("Untitled Workflow")
+  description String?
+  
+  // React Flow canvas graph structure
+  nodes       Json     @default("[]") // Array of React Flow Nodes (positions, type, settings)
+  edges       Json     @default("[]") // Array of React Flow Edges (wires & connections)
+  viewport    Json?    // Optional { x: number, y: number, zoom: number }
+  
+  // Flag for starter workflows (e.g., Product Marketing Kit Generator)
+  isTemplate  Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  runs        WorkflowRun[]
+
+  @@index([userId])
+  @@map("workflows")
+}
+
+
+
+// -------------------------------------------------------------
+// 2. WORKFLOW RUN (History Panel Entry)
+// -------------------------------------------------------------
+enum RunScope {
+  FULL
+  SELECTED
+  SINGLE
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+
+model WorkflowRun {
+  id           String          @id @default(cuid())
+  workflowId   String
+  workflow     Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  userId       String          // Clerk User ID for user-scoped queries
+  
+  scope        RunScope        @default(FULL)
+  status       ExecutionStatus @default(PENDING)
+  
+  // Trigger.dev integration run handle
+  triggerRunId String?
+  
+  // Timing metrics
+  startedAt    DateTime        @default(now())
+  completedAt  DateTime?
+  durationMs   Int?            // Total duration in milliseconds
+  
+  error        String?         // Workflow-level error (if any)
+  
+  // Node-level breakdown
+  nodeExecutions NodeExecution[]
+
+  @@index([workflowId])
+  @@index([userId])
+  @@index([status])
+  @@map("workflow_runs")
+}
+
+
+
+
+// -------------------------------------------------------------
+// 3. NODE EXECUTION (Node-Level History Tree)
+// -------------------------------------------------------------
+model NodeExecution {
+  id           String          @id @default(cuid())
+  runId        String
+  run          WorkflowRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  
+  nodeId       String          // React Flow node ID (e.g. "crop-1", "llm-2")
+  nodeType     String          // "textArea", "uploadImage", "uploadVideo", "llm", "cropImage", "extractFrame"
+  nodeName     String?         // Human-readable title (e.g. "Crop Image")
+  
+  status       ExecutionStatus @default(PENDING)
+  
+  // Input/Output data payloads captured at runtime
+  inputs       Json?           // e.g. { imageUrl: "...", crop: { x: 0, y: 0, w: 80, h: 80 } }
+  outputs      Json?           // e.g. { imageUrl: "https://...", text: "..." }
+  error        String?         // Specific error if this node failed
+  
+  // Node timing
+  startedAt    DateTime        @default(now())
+  completedAt  DateTime?
+  durationMs   Int?            // Duration in milliseconds
+
+  @@index([runId])
+  @@index([nodeId])
+  @@map("node_executions")
+}

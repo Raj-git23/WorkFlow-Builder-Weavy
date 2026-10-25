@@ -7,6 +7,7 @@ import { BaseNodeData } from "@/types/nodetype";
 export function BaseNode<T extends BaseNodeData>({
   id,
   data,
+  selected,
   handles = [{ text: "Output", position: Position.Right, type: "source" }],
   children,
 }: BaseNodeProps<T>) {
@@ -32,7 +33,7 @@ export function BaseNode<T extends BaseNodeData>({
         />
       ))}
 
-      {children({ id, data: data as T, active })}
+      {children({ id, data: data as T, active, selected })}
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import { runs, tasks } from "@trigger.dev/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import type { extractFrameTask } from "@/trigger/ffmpegtask";
+import path from "path";
+import fs from "fs";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,10 +15,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Resolve local upload path to absolute path for reliable disk access in Trigger.dev
+    let resolvedVideoUrl = videoUrl;
+    if (typeof videoUrl === "string" && (videoUrl.startsWith("/uploads/") || videoUrl.startsWith("uploads/"))) {
+      const cleanPath = videoUrl.startsWith("/") ? videoUrl.slice(1) : videoUrl;
+      const absPath = path.join(process.cwd(), "public", cleanPath);
+      if (fs.existsSync(absPath)) {
+        resolvedVideoUrl = absPath;
+      }
+    }
+
     const handle = await tasks.trigger<typeof extractFrameTask>(
       "extract-frame",
       {
-        videoUrl,
+        videoUrl: resolvedVideoUrl,
         timestamp: timestamp ?? 0,
         percentage: percentage ?? undefined,
       },
@@ -31,7 +43,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ dataUrl: result.output.dataUrl });
+    return NextResponse.json({
+      url: result.output.url || result.output.dataUrl,
+      dataUrl: result.output.dataUrl,
+    });
   } catch (err) {
     console.error("Extract frame route error:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

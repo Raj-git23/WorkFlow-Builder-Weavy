@@ -23,7 +23,7 @@ export const DEFAULT_DATA: Record<NodeType, Record<string, unknown>> = {
   textArea: { value: "" },
   uploadImage: { fileType: "image" },
   uploadVideo: { fileType: "video" },
-  llm: { model: "gpt-4o", imageInputCount: 1 },
+  llm: { model: "", imageInputCount: 1 },
   cropImage: { aspectRatio: "Custom", width: 100, height: 100 },
   extractFrame: { frame: 0 },
 };

@@ -14,16 +14,46 @@ export function sign(params: string): string {
   return createHmac("sha1", AUTH_SECRET!).update(params).digest("hex");
 }
 
-
-export function frameToTimecode(frame: number, fps = 30): string {
-  const totalSeconds = Math.floor(frame / fps);
-  const h = Math.floor(totalSeconds / 3600).toString().padStart(2, "0");
-  const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, "0");
-  const s = (totalSeconds % 60).toString().padStart(2, "0");
+/** Formats total seconds into HH:MM:SS string format */
+export function secondsToTimecode(seconds: number): string {
+  const safeSec = Math.max(0, Math.floor(seconds || 0));
+  const h = Math.floor(safeSec / 3600).toString().padStart(2, "0");
+  const m = Math.floor((safeSec % 3600) / 60).toString().padStart(2, "0");
+  const s = (safeSec % 60).toString().padStart(2, "0");
   return `${h}:${m}:${s}`;
 }
 
-let nodeCounter = 0
+/** Converts HH:MM:SS or MM:SS timecode string back into total seconds */
+export function timecodeToSeconds(timecodeStr: string): number {
+  if (!timecodeStr) return 0;
+  const parts = timecodeStr.trim().split(":").map((p) => parseInt(p, 10) || 0);
+
+  let h = 0, m = 0, s = 0;
+
+  if (parts.length === 3) {
+    [h, m, s] = parts;
+  } else if (parts.length === 2) {
+    [m, s] = parts;
+  } else if (parts.length === 1) {
+    s = parts[0];
+  }
+
+  return Math.max(0, h * 3600 + m * 60 + s);
+}
+
+/** Converts frame number to HH:MM:SS timecode (at 30 fps) */
+export function frameToTimecode(frame: number, fps = 30): string {
+  const seconds = Math.floor((frame || 0) / fps);
+  return secondsToTimecode(seconds);
+}
+
+/** Converts HH:MM:SS timecode string back into frame count (at 30 fps) */
+export function timecodeToFrame(timecodeStr: string, fps = 30): number {
+  const seconds = timecodeToSeconds(timecodeStr);
+  return seconds * fps;
+}
+
+let nodeCounter = 0;
 export function genId(type: NodeType) {
   return `${type}-${++nodeCounter}`;
 }
@@ -43,8 +73,3 @@ export function parseAspectRatio(ratio: string): number | undefined {
 }
 
 export const round = (val: number) => Math.round(val * 100) / 100;
-
-// const handles = [
-//   { text: "File*", id: `${props.id}-file-in`, position: Position.Left, type: "target" as const },
-//   { text: "File", id: FILE_OUT_HANDLE(props.id), position: Position.Right, type: "source" as const },
-// ];

@@ -46,7 +46,7 @@ export interface BaseNodeProps<T extends BaseNodeData> extends NodeProps<
   Node<T, string>
 > {
   handles?: HandleDescriptor[];
-  children: (ctx: { id: string; data: T; active: boolean }) => React.ReactNode;
+  children: (ctx: { id: string; data: T; active: boolean; selected?: boolean }) => React.ReactNode;
 }
 
 export interface CustomHandleProps {
@@ -65,4 +65,5 @@ export interface NodeShellProps {
   children: React.ReactNode;
   className?: string;
   nodeId?: string;
+  selected?: boolean;
 }

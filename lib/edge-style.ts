@@ -2,21 +2,21 @@ import { MarkerType } from "@xyflow/react";
 import type { NodeType } from "@/types/nodetype";
 
 
-// Maps node types to their edge colors. Add an entry for each NodeType.
-const NODE_COLORS: Partial<Record<NodeType, string>> = {
-  textArea: "#f1a0fa", // purple
-  uploadImage: "#ea8362", // green
-  uploadVideo: "#ea8362", // light-orange
-//   llm: "#45a08a",
-//   cropImage: "#45a08a",
-//   extractFrame: "#45a08a",
+// Maps node types to their edge colors based on their emitted data type.
+const NODE_COLORS: Record<NodeType, string> = {
+  textArea: "#f1a0fa", // purple (text)
+  uploadImage: "#45a08a", // teal/green (image)
+  uploadVideo: "#ea8362", // warm orange (video)
+  llm: "#f1a0fa", // purple (text output)
+  cropImage: "#45a08a", // teal/green (image output)
+  extractFrame: "#45a08a", // teal/green (extracted frame image)
 };
 
-export function getEdgeStyle(sourceType: NodeType, targetType: NodeType) {
-  // Use source node color by default — change to targetType if you prefer
-  const color = NODE_COLORS[sourceType] ?? "#45a08a";
+export function getEdgeStyle(sourceType: NodeType, targetType?: NodeType) {
+  const color = NODE_COLORS[sourceType] ?? "#f1a0fa";
 
   return {
+    animated: true,
     style: {
       stroke: color,
       strokeWidth: 2,

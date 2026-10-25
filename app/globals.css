@@ -143,3 +143,86 @@
   }
 }
 
+/* Custom ReactCrop Styling matching Weavy UI (Greenish accent & stable grid) */
+.ReactCrop__crop-selection {
+  border: 1.5px solid #f7ffa8 !important;
+  animation: none !important;
+  box-shadow: 0 0 0 9999em rgba(0, 0, 0, 0.65) !important;
+}
+
+.ReactCrop__crop-selection::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    linear-gradient(to right, rgba(247, 255, 168, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(247, 255, 168, 0.35) 1px, transparent 1px);
+  background-size: 33.333% 33.333%;
+}
+
+.ReactCrop__drag-handle {
+  width: 9px !important;
+  height: 9px !important;
+  background-color: #f7ffa8 !important;
+  border: 1px solid #111113 !important;
+  border-radius: 1px !important;
+  opacity: 1 !important;
+}
+
+.ReactCrop__drag-handle:hover {
+  background-color: #ffffff !important;
+}
+
+/* React Flow Node Selection Styling */
+.react-flow__node {
+  outline: none !important;
+}
+
+.react-flow__node.selected .node-shell,
+.react-flow__node.selected > div > .node-shell,
+.node-shell[data-selected="true"] {
+  border-color: #f7ffa8 !important;
+  background-color: #2c2b33 !important;
+  box-shadow: 0 0 0 1px #f7ffa8, 0 0 16px rgba(247, 255, 168, 0.12) !important;
+}
+
+/* Sleek Custom Scrollbar with Gray Track and Greenish (#f7ffa8) Thumb */
+::-webkit-scrollbar,
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #1e1d22;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb,
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #f7ffa8;
+  border-radius: 4px;
+  border: 1px solid #1e1d22;
+}
+
+::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #e8f28c;
+}
+
+::-webkit-scrollbar-button,
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Firefox / Standards Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #f7ffa8 #1e1d22;
+}
+
+

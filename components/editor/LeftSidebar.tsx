@@ -31,11 +31,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <div
       className={`${
-        isOpen ? "w-14" : "w-auto"
-      } flex flex-col items-center h-full`}
+        isOpen ? "w-14" : "w-10"
+      } flex flex-col items-center h-full relative shrink-0 z-20 transition-all duration-200`}
     >
       {isOpen && (
-        <main className="bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border py-4 flex flex-col items-center z-20 h-full w-full">
+        <aside className="bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border py-4 flex flex-col items-center h-full w-full">
           <Cloud height="32px" width="32px" className="mb-8" />
 
           <TooltipProvider>
@@ -62,13 +62,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
               ))}
             </div>
           </TooltipProvider>
-        </main>
+        </aside>
       )}
 
       <button
         className={`${
-          isOpen ? "border-0" : "border border-sidebar-border left-2"
-        } rounded-md p-1 mt-auto absolute bottom-4 z-50 bg-sidebar-background text-sidebar-foreground cursor-pointer hover:bg-button-hover`}
+          isOpen ? "border-0 left-2" : "border border-sidebar-border left-1.5"
+        } rounded-md p-1 absolute bottom-4 z-50 bg-sidebar-background text-sidebar-foreground cursor-pointer hover:bg-button-hover`}
         onClick={() => setIsOpen((prev) => !prev)}
       >
         {isOpen ? (
