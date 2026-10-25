@@ -1,6 +1,5 @@
-// components/nodes/LlmNode.tsx
 import { useCallback, useState, useEffect } from "react";
-import { type NodeProps, Position, useUpdateNodeInternals } from "@xyflow/react";
+import { type NodeProps, Position, useUpdateNodeInternals, useReactFlow } from "@xyflow/react";
 import { Plus, Play, ChevronsUpDown, Check, Loader2, Copy, CheckCheck, Sparkles, MessageSquare } from "lucide-react";
 import { NodeShell } from "@/components/nodes/NodeShell";
 import { BaseNode } from "@/components/nodes/BaseNode";
@@ -21,6 +20,8 @@ import { cn } from "@/lib/utils";
 import { MODELS } from "@/lib/constant";
 import { useFlowStore, useNodeInput, useIsNodeRunning } from "@/store/useFlowStore";
 import { MarkdownView } from "@/components/ui/markdown-view";
+import { toast } from "sonner";
+import { errorHandler } from "@/lib/error-handler";
 
 const HANDLE_SPACING = 28;
 const HANDLE_START_Y = 56;
@@ -75,12 +76,23 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
   const [imageInputCount, setImageInputCount] = useState(
     props.data.imageInputCount ?? 1
   );
+  const savedResponse = props.data.response || null;
   const [localPrompt, setLocalPrompt] = useState<string>("");
+  const { updateNodeData } = useReactFlow();
 
-  const [status, setStatus] = useState<"idle" | "running" | "done" | "error">("idle");
-  const [resultText, setResultText] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "running" | "done" | "error">(
+    savedResponse ? "done" : "idle"
+  );
+  const [resultText, setResultText] = useState<string | null>(savedResponse);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Sync saved response to flow store on mount
+  useEffect(() => {
+    if (savedResponse) {
+      setOutput(props.id, { text: savedResponse });
+    }
+  }, [savedResponse, props.id, setOutput]);
 
   // Fetch available Gemini models on mount
   useEffect(() => {
@@ -132,13 +144,17 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
   // Execute LLM call via Trigger.dev
   const runModel = useCallback(async () => {
     if (!model) {
-      setError("Please select a model from the dropdown.");
+      const msg = "Please select a model from the dropdown.";
+      setError(msg);
+      toast.warning(msg);
       return;
     }
 
     const activePrompt = (connectedUserMessage || localPrompt).trim();
     if (!activePrompt) {
-      setError("Please connect a Text Node to User Message or type a prompt.");
+      const msg = "Please connect a Text Node to User Message or type a prompt.";
+      setError(msg);
+      toast.warning(msg);
       return;
     }
 
@@ -165,9 +181,18 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
       setResultText(data.text);
       setStatus("done");
       setOutput(props.id, { text: data.text });
+      updateNodeData(props.id, {
+        model,
+        userMessage: localPrompt,
+        response: data.text,
+        imageInputCount,
+      });
+      toast.success("AI response generated successfully!");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const friendlyMessage = errorHandler.format(err);
+      setError(friendlyMessage);
       setStatus("error");
+      toast.error(friendlyMessage, { duration: 6000 });
     }
   }, [
     model,
@@ -175,8 +200,10 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
     localPrompt,
     connectedSystemPrompt,
     getConnectedImages,
+    imageInputCount,
     props.id,
     setOutput,
+    updateNodeData,
   ]);
 
   const handleCopy = useCallback(() => {

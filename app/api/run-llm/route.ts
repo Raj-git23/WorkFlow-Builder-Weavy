@@ -1,6 +1,7 @@
 import { runs, tasks } from "@trigger.dev/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import type { geminiTask } from "@/trigger/geminitask";
+import { errorHandler } from "@/lib/error-handler";
 import path from "path";
 import fs from "fs";
 
@@ -43,8 +44,12 @@ export async function POST(req: NextRequest) {
     const result = await runs.poll(handle, { pollIntervalMs: 1000 });
 
     if (result.status !== "COMPLETED" || !result.output) {
+      const rawTaskError =
+        (result as any)?.error?.message ||
+        (typeof (result as any)?.error === "string" ? (result as any).error : null) ||
+        `LLM task execution failed: ${result.status}`;
       return NextResponse.json(
-        { error: "LLM task execution failed", status: result.status },
+        { error: errorHandler.format(rawTaskError), status: result.status },
         { status: 500 }
       );
     }
@@ -53,7 +58,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     console.error("Run LLM route error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : String(err) },
+      { error: errorHandler.format(err) },
       { status: 500 }
     );
   }

@@ -178,6 +178,7 @@ async function uploadToTransloadit(filePath: string): Promise<{ url: string; dat
 export const cropImageTask = task({
   id: "crop-image",
   maxDuration: 120,
+  concurrency: { total: 2 },
   run: async (payload: {
     imageUrl: string;
     x: number; // % 0–100
@@ -209,6 +210,7 @@ export const cropImageTask = task({
 export const extractFrameTask = task({
   id: "extract-frame",
   maxDuration: 120,
+  concurrency: { total: 2 },
   run: async (payload: {
     videoUrl: string;
     timestamp: number; // timestamp in seconds

@@ -34,6 +34,18 @@ export function useTransloaditUpload(fileType: "image" | "video") {
           return data;
         }
 
+        // Validate file size on client before initiating upload
+        if (input instanceof File) {
+          const maxBytes = 25 * 1024 * 1024; // 25MB free-tier limit
+          if (input.size > maxBytes) {
+            const sizeMb = (input.size / (1024 * 1024)).toFixed(1);
+            const errorMsg = `File is too large (${sizeMb}MB). Maximum allowed upload size is 25MB on the free tier.`;
+            setError(errorMsg);
+            setStatus("error");
+            return null;
+          }
+        }
+
         // Direct Client-to-Transloadit Upload for File objects
         // 1. Fetch signed parameters from our server route
         let signedParamsData: { signature?: string; params?: string } | null = null;

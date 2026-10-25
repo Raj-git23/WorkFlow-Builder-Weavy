@@ -11,12 +11,15 @@ interface FlowStore {
   outputs: Record<string, NodeOutput>;
   edges: Edge[];
   runningNodeIds: string[];
+  activeRuns: Record<string, string[]>;
   currentRunId: string | null;
   workflowStatus: "idle" | "running" | "completed" | "failed";
   setOutput: (nodeId: string, output: NodeOutput) => void;
   setOutputs: (outputs: Record<string, NodeOutput>) => void;
   setEdges: (edges: Edge[]) => void;
   setRunningNodes: (nodeIds: string[]) => void;
+  startRun: (runId: string, nodeIds: string[]) => void;
+  finishRun: (runId: string) => void;
   setWorkflowStatus: (status: "idle" | "running" | "completed" | "failed", runId?: string | null) => void;
   getInput: (targetNodeId: string, handleId?: string) => NodeOutput | null;
 }
@@ -25,6 +28,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   outputs: {},
   edges: [],
   runningNodeIds: [],
+  activeRuns: {},
   currentRunId: null,
   workflowStatus: "idle",
 
@@ -47,6 +51,35 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   setEdges: (edges) => set({ edges }),
 
   setRunningNodes: (runningNodeIds) => set({ runningNodeIds }),
+
+  startRun: (runId: string, nodeIds: string[]) =>
+    set((s) => {
+      const updatedRuns = { ...s.activeRuns, [runId]: nodeIds };
+      const allRunning = Array.from(new Set([...s.runningNodeIds, ...nodeIds]));
+      return {
+        activeRuns: updatedRuns,
+        runningNodeIds: allRunning,
+        workflowStatus: "running",
+        currentRunId: runId,
+      };
+    }),
+
+  finishRun: (runId: string) =>
+    set((s) => {
+      const updatedRuns = { ...s.activeRuns };
+      delete updatedRuns[runId];
+
+      const remainingNodeIds = Array.from(
+        new Set(Object.values(updatedRuns).flat())
+      );
+      const hasActive = remainingNodeIds.length > 0;
+      return {
+        activeRuns: updatedRuns,
+        runningNodeIds: remainingNodeIds,
+        workflowStatus: hasActive ? "running" : "idle",
+        currentRunId: hasActive ? Object.keys(updatedRuns)[0] : null,
+      };
+    }),
 
   setWorkflowStatus: (workflowStatus, currentRunId = null) =>
     set((s) => ({

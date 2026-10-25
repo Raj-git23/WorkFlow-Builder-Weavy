@@ -46,7 +46,7 @@ export const NODE_HANDLE_SCHEMA: Record<
   extractFrame: {
     inputs: (handleId) => {
       const h = handleId?.toLowerCase() || "";
-      if (h.includes("timestamp") || h.includes("frame")) return "number";
+      if (h.endsWith("-timestamp-in") || h.includes("timestamp")) return "number";
       return "video"; // ${id}-video-in
     },
     outputs: () => "image", // ${id}-frame-out

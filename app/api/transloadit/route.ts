@@ -65,6 +65,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 });
       }
 
+      if (file.size > 25 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: "File exceeds 25MB free tier limit" },
+          { status: 413 }
+        );
+      }
+
       fileBuffer = Buffer.from(await file.arrayBuffer());
       fileName = file.name;
     } else if (contentType.includes("application/json")) {

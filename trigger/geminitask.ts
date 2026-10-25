@@ -109,6 +109,7 @@ async function prepareImagePart(
 export const geminiTask = task({
   id: "run-gemini",
   maxDuration: 120,
+  concurrency: { total: 3 },
   run: async (payload: {
     model?: string;
     systemPrompt?: string;
