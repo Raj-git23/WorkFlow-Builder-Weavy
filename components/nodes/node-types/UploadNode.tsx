@@ -313,12 +313,12 @@ function UploadContent({
       ) : (
         <Input
           type="url"
-          placeholder="Paste a file link"
+          placeholder="Paste a file link and press 'Enter'"
           value={linkValue}
           onChange={(e) => setLinkValue(e.target.value)}
           onKeyDown={handleLinkSubmit}
           disabled={isUploading}
-          className="nodrag w-full text-[11px] font-medium rounded-sm border border-sidebar-border mt-1"
+          className="nodrag w-full text-[11px] font-medium rounded-sm border border-sidebar-border mt-1 bg-[#1c1b1f] text-sidebar-foreground placeholder:text-sidebar-foreground/50"
         />
       )}
     </>

@@ -250,22 +250,27 @@ export function resolveNodeExecutionInput(
         ? outputsSoFar[sysEdge.source]?.text
         : String(nodeData.systemPrompt || "");
 
-      // Resolve user message
+      // Resolve user message (from connected Text Node or typed directly into the node)
       const userEdge = incoming.find((e) =>
-        e.targetHandle?.includes("user-message")
+        e.targetHandle ? e.targetHandle.includes("user-message") : false
       );
-      const userMessage = userEdge
-        ? outputsSoFar[userEdge.source]?.text
-        : String(nodeData.userMessage || nodeData.prompt || "");
+      const userMessage = String(
+        (userEdge ? outputsSoFar[userEdge.source]?.text : null) ||
+        nodeData.userMessage ||
+        nodeData.prompt ||
+        nodeData.value ||
+        ""
+      ).trim();
 
-      // Resolve images (can have multiple image inputs connected)
-      const imageEdges = incoming.filter((e) =>
-        e.targetHandle?.includes("image")
-      );
+      // Resolve images (from image handles or any connected node providing imageUrl)
       const images: string[] = [];
-      for (const e of imageEdges) {
+      for (const e of incoming) {
+        const isUserMessageHandle = e.targetHandle?.includes("user-message");
+        const isSystemPromptHandle = e.targetHandle?.includes("system-prompt");
         const url = outputsSoFar[e.source]?.imageUrl;
-        if (url) images.push(url);
+        if (url && !isUserMessageHandle && !isSystemPromptHandle && !images.includes(url)) {
+          images.push(url);
+        }
       }
 
       capturedInputs.model = model;

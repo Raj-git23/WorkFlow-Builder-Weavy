@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     // Trigger Trigger.dev task
     const handle = await tasks.trigger<typeof geminiTask>("run-gemini", {
-      model: model || "gemini-2.5-flash",
+      model: model && model !== "gemini-2.5-flash" ? model : "gemini-3.5-flash",
       systemPrompt: systemPrompt || undefined,
       userMessage: userMessage.trim(),
       images: resolvedImages,

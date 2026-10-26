@@ -70,15 +70,26 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
   const userInput = useNodeInput(props.id, USER_MESSAGE_HANDLE(props.id));
   const connectedUserMessage = userInput?.text ?? "";
 
-  // Local state - default to empty string so 'Select model...' placeholder is shown
+  // Local state - default to first available model from constant / fetched list
+  const isKnownModel = Boolean(props.data.model && MODELS.some((m) => m.value === props.data.model));
+  const defaultInitialModel: string = isKnownModel && props.data.model ? props.data.model : (MODELS[0]?.value ?? "gemini-3.5-flash");
   const [modelList, setModelList] = useState(MODELS);
-  const [model, setModel] = useState<string>(props.data.model || "");
+  const [model, setModel] = useState<string>(defaultInitialModel);
   const [imageInputCount, setImageInputCount] = useState(
     props.data.imageInputCount ?? 1
   );
   const savedResponse = props.data.response || null;
-  const [localPrompt, setLocalPrompt] = useState<string>("");
+  const initialPrompt = String(props.data.userMessage || props.data.prompt || "");
+  const [localPrompt, setLocalPrompt] = useState<string>(initialPrompt);
   const { updateNodeData } = useReactFlow();
+
+  const handlePromptChange = useCallback(
+    (val: string) => {
+      setLocalPrompt(val);
+      updateNodeData(props.id, { userMessage: val, prompt: val });
+    },
+    [props.id, updateNodeData]
+  );
 
   const [status, setStatus] = useState<"idle" | "running" | "done" | "error">(
     savedResponse ? "done" : "idle"
@@ -103,6 +114,8 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
           const data = await res.json();
           if (Array.isArray(data.models) && data.models.length > 0) {
             setModelList(data.models);
+            const validSet = new Set(data.models.map((m: any) => m.value));
+            setModel((curr) => (curr && validSet.has(curr) ? curr : data.models[0].value));
           }
         }
       } catch (e) {
@@ -192,7 +205,10 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
       const friendlyMessage = errorHandler.format(err);
       setError(friendlyMessage);
       setStatus("error");
-      toast.error(friendlyMessage, { duration: 6000 });
+      toast.error(friendlyMessage, {
+        id: `llm_node_err_${props.id}`,
+        duration: 6000,
+      });
     }
   }, [
     model,
@@ -279,6 +295,7 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
             onValueChange={(val) => {
               setModel(val);
               setError(null);
+              updateNodeData(props.id, { model: val });
             }}
             disabled={isRunning}
           >
@@ -389,7 +406,7 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
                 <Textarea
                   placeholder="Type your prompt here or connect a Text Node to User Message…"
                   value={localPrompt}
-                  onChange={(e) => setLocalPrompt(e.target.value)}
+                  onChange={(e) => handlePromptChange(e.target.value)}
                   disabled={isRunning}
                   className="nodrag nowheel rounded-sm border-sidebar-border bg-[#1c1b1f] text-sidebar-foreground text-xs p-2.5 h-28 focus-visible:ring-0 resize-y"
                 />
@@ -419,12 +436,12 @@ export function LLMNode(props: NodeProps<LLMRFNode>) {
             )}
 
             <Button
-              variant="outline"
+              variant="yellowButton"
               size="sm"
               onClick={runModel}
               disabled={isRunning || (!connectedUserMessage && !localPrompt.trim())}
               className={cn(
-                "nodrag cursor-pointer h-auto gap-1.5 px-4 py-2.5 text-xs font-medium border-sidebar-border bg-yellow-bg text-black hover:bg-yellow-bg/80 disabled:opacity-40 ml-auto",
+                "nodrag cursor-pointer h-auto gap-1.5 px-4 py-2.5 text-xs font-semibold ml-auto",
                 !resultText && "w-full"
               )}
             >

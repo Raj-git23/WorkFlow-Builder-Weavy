@@ -3,7 +3,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ClerkProvider, RedirectToSignIn, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { dmMono, dmSans, geistMono, geistSans, inter, roboto, roboto_mono } from "@/lib/font-styles";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 import ClerkAuthSync from "@/components/auth/ClerkAuthSync";
 
 
@@ -20,9 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" className="dark">
         <body
-          className={`${geistSans.variable} font-inter ${dmMono.variable} ${dmSans.variable}  ${geistMono.variable} ${inter.variable} ${roboto_mono.variable} ${roboto.variable} antialiased`}
+          className={`${geistSans.variable} font-inter ${dmMono.variable} ${dmSans.variable}  ${geistMono.variable} ${inter.variable} ${roboto_mono.variable} ${roboto.variable} antialiased dark bg-[#0a0a0a] text-[#f2f0f8]`}
         >
           <SignedIn>
             <TooltipProvider>

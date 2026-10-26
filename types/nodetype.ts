@@ -24,6 +24,7 @@ export type LLMNodeData = {
   model?: string;
   systemPrompt?: string;
   userMessage?: string;
+  prompt?: string;
   imageInputCount?: number;
   response?: string;
 };

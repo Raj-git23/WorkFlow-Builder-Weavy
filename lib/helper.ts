@@ -53,9 +53,9 @@ export function timecodeToFrame(timecodeStr: string, fps = 30): number {
   return seconds * fps;
 }
 
-let nodeCounter = 0;
 export function genId(type: NodeType) {
-  return `${type}-${++nodeCounter}`;
+  const unique = `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
+  return `${type}-${unique}`;
 }
 
 export function takeSnapshot(nodes: Node[], edges: Edge[]): Snapshot {

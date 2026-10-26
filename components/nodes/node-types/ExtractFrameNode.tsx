@@ -277,11 +277,11 @@ export function ExtractFrameNode(props: NodeProps<ExtractFrameRFNode>) {
 
           {/* Run Extract Button */}
           <Button
-            variant="outline"
+            variant="yellowButton"
             size="sm"
             onClick={runExtract}
             disabled={!videoUrl || isRunning}
-            className="nodrag w-full gap-1.5 text-sm border-sidebar-border py-5 bg-yellow-bg text-black hover:bg-yellow-bg/80 hover:text-black disabled:opacity-40 mt-2"
+            className="nodrag w-full gap-1.5 text-sm py-5 font-semibold mt-2 cursor-pointer"
           >
             {isRunning ? (
               <>
