@@ -4,6 +4,7 @@ import { NodeShellProps } from "@/types/filetypes";
 import { Ellipsis } from "lucide-react";
 import { useNodeActions } from "@/types/nodetype";
 import { ButtonDropDown } from "@/components/nodes/ButtonDropDown";
+import { useIsNodeInWorkflow } from "@/store/useFlowStore";
 
 export function NodeShell({
   title,
@@ -14,6 +15,7 @@ export function NodeShell({
   selected,
 }: NodeShellProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const isInWorkflow = useIsNodeInWorkflow(nodeId || "");
 
   return (
     <div
@@ -21,6 +23,8 @@ export function NodeShell({
       className={`node-shell flex flex-col gap-2 rounded-md border transition-all duration-150 ${
         selected
           ? "border-yellow-bg bg-[#2c2b33] ring-1 ring-yellow-bg/40 shadow-[0_0_15px_rgba(247,255,168,0.1)]"
+          : isInWorkflow
+          ? "border-[#f7ffa8]/60 bg-[#25242b] ring-1 ring-[#f7ffa8]/20"
           : "border-sidebar-border bg-sidebar-background"
       } p-3 text-xs text-sidebar-foreground min-w-xs h-auto ${className}`}
     >

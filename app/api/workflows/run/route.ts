@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
       selectedNodeIds = [],
       nodes = [],
       edges = [],
+      initialOutputs = {},
     } = body;
 
     const userId = clerkUserId || body.userId || "dev_user";
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
         nodes,
         edges,
         selectedNodeIds,
+        initialOutputs,
       }
     );
 

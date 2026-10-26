@@ -9,12 +9,11 @@ export const MAX_HISTORY = 20;
 export const ASPECT_RATIOS = ["Custom", "1:1", "4:3", "16:9", "3:2", "9:16", "2:3"];
 
 export const MODELS = [
-  { label: "Gemini 3.7 Flash", value: "gemini-3.7-flash", desc: "Flagship: Fast & powerful multimodal (Free tier)" },
-  { label: "Gemini 3.6 Flash", value: "gemini-3.6-flash", desc: "High-speed multimodal reasoning (Free tier)" },
-  { label: "Gemini 3.5 Flash", value: "gemini-3.5-flash", desc: "Balanced performance & vision (Free tier)" },
-  { label: "Gemini 3.5 Flash-Lite", value: "gemini-3.5-flash-lite", desc: "High throughput & lightweight (Free tier)" },
+  { label: "Gemini 3.5 Flash", value: "gemini-3.5-flash", desc: "Best for vision & multimodal, fast & stable (Free tier)" },
+  { label: "Gemini 3.5 Flash-Lite", value: "gemini-3.5-flash-lite", desc: "Ultra-fast lightweight vision model (Free tier)" },
+  { label: "Gemini 3.8 Flash", value: "gemini-3.8-flash", desc: "Latest multimodal model (Free tier)" },
+  { label: "Gemini 3.7 Flash", value: "gemini-3.7-flash", desc: "Advanced reasoning multimodal model (Free tier)" },
   { label: "Gemini Flash Latest", value: "gemini-flash-latest", desc: "Always points to newest Flash model (Free tier)" },
-  { label: "Gemini Flash-Lite Latest", value: "gemini-flash-lite-latest", desc: "Always points to newest Lite model (Free tier)" },
 ];
 
 export const ACCEPT = {

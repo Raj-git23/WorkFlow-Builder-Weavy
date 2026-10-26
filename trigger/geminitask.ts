@@ -10,15 +10,24 @@ async function prepareImagePart(
   try {
     // 1. Base64 Data URL
     if (urlOrPath.startsWith("data:")) {
-      const match = urlOrPath.match(/^data:([^;]+);base64,(.+)$/);
-      if (match) {
+      const commaIdx = urlOrPath.indexOf(",");
+      if (commaIdx !== -1) {
+        const meta = urlOrPath.slice(5, commaIdx);
+        const data = urlOrPath.slice(commaIdx + 1);
+        const mimeType = meta.split(";")[0] || "image/jpeg";
         return {
           inlineData: {
-            mimeType: match[1] || "image/jpeg",
-            data: match[2],
+            mimeType,
+            data: data.replace(/\s+/g, ""),
           },
         };
       }
+    }
+
+    // Blob URLs cannot be read on the backend
+    if (urlOrPath.startsWith("blob:")) {
+      console.warn("Browser blob URL cannot be fetched on backend worker:", urlOrPath);
+      return null;
     }
 
     // 2. Absolute filesystem path
@@ -70,35 +79,46 @@ async function prepareImagePart(
       }
     }
 
-    // 4. Remote HTTP/HTTPS URL
+    // 4. Remote HTTP/HTTPS URL with abort timeout
     let targetUrl = urlOrPath;
     if (urlOrPath.startsWith("/")) {
       targetUrl = `http://localhost:3000${urlOrPath}`;
     }
 
-    const res = await fetch(targetUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "image/*,*/*",
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    if (!res.ok) {
-      console.warn(`Failed to fetch image for Gemini (${res.status}): ${targetUrl}`);
+    try {
+      const res = await fetch(targetUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "image/*,*/*",
+        },
+      });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        console.warn(`Failed to fetch image for Gemini (${res.status}): ${targetUrl}`);
+        return null;
+      }
+
+      const arrayBuf = await res.arrayBuffer();
+      const mimeType = res.headers.get("content-type") || "image/jpeg";
+      const data = Buffer.from(arrayBuf).toString("base64");
+
+      return {
+        inlineData: {
+          mimeType: mimeType.split(";")[0],
+          data,
+        },
+      };
+    } catch (fetchErr) {
+      clearTimeout(timeoutId);
+      console.warn(`Fetch timed out or failed for: ${targetUrl}`, fetchErr);
       return null;
     }
-
-    const arrayBuf = await res.arrayBuffer();
-    const mimeType = res.headers.get("content-type") || "image/jpeg";
-    const data = Buffer.from(arrayBuf).toString("base64");
-
-    return {
-      inlineData: {
-        mimeType: mimeType.split(";")[0],
-        data,
-      },
-    };
   } catch (err) {
     console.warn("Failed to prepare image part for Gemini:", err);
     return null;
@@ -123,7 +143,12 @@ export const geminiTask = task({
       );
     }
 
-    const { model = "gemini-2.5-flash", systemPrompt, userMessage, images } = payload;
+    let targetModel = payload.model || "gemini-3.5-flash";
+    if (targetModel === "gemini-2.5-flash" || targetModel === "gemini-2.0-flash") {
+      targetModel = "gemini-3.5-flash";
+    }
+
+    const { systemPrompt, userMessage, images } = payload;
 
     if (!userMessage || !userMessage.trim()) {
       throw new Error("user_message (prompt) is required for LLM execution.");
@@ -156,7 +181,7 @@ export const geminiTask = task({
 
     try {
       const response = await ai.models.generateContent({
-        model,
+        model: targetModel,
         contents: parts,
         config,
       });
@@ -171,7 +196,7 @@ export const geminiTask = task({
         msg.includes("Quota exceeded")
       ) {
         throw new Error(
-          `Quota/Rate limit reached for model '${model}'. Please select 'Gemini 2.0 Flash' or 'Gemini 1.5 Flash' (free tier) and try again in a few seconds.`
+          `Quota/Rate limit reached for model '${targetModel}'. Please select 'Gemini 3.5 Flash-Lite' or 'Gemini 3.5 Flash' (free tier) and try again in a few seconds.`
         );
       }
       throw err;

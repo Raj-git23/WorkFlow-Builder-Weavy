@@ -16,6 +16,8 @@ import { round } from "@/lib/helper";
 import { useFlowStore, useNodeInput, useIsNodeRunning } from "@/store/useFlowStore";
 import ReactCrop, { type Crop as ReactCropType } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import { toast } from "sonner";
+import { errorHandler } from "@/lib/error-handler";
 
 export function CropImageNode(props: NodeProps<CropRFNode>) {
   // Retrieve upstream node output connected to input handle
@@ -51,7 +53,8 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
   });
 
   const aspectNum = ASPECT_MAP[aspectRatio];
-  const activeImage = resultUrl ?? imageUrl;
+  // Always keep the original source image in the crop canvas so the source is preserved
+  const activeImage = imageUrl;
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { naturalWidth, naturalHeight } = e.currentTarget;
@@ -108,7 +111,10 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
   };
 
   const runCrop = useCallback(async () => {
-    if (!activeImage) return;
+    if (!imageUrl) {
+      toast.warning("Please connect an image to crop.");
+      return;
+    }
     setStatus("running");
     setError(null);
 
@@ -117,7 +123,7 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imageUrl: activeImage,
+          imageUrl: imageUrl,
           x: round(crop.x || 0),
           y: round(crop.y || 0),
           width: round(crop.width || 100),
@@ -133,11 +139,14 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
       setStatus("done");
 
       setOutput(props.id, { imageUrl: finalUrl });
+      toast.success("Image cropped successfully!");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const friendly = errorHandler.format(err);
+      setError(friendly);
       setStatus("error");
+      toast.error(friendly, { id: `crop_node_err_${props.id}` });
     }
-  }, [activeImage, crop, props.id, setOutput]);
+  }, [imageUrl, crop, props.id, setOutput]);
 
   const handles = [
     {
@@ -353,15 +362,30 @@ export function CropImageNode(props: NodeProps<CropRFNode>) {
 
             {/* Error message */}
             {error && <p className="text-[11px] text-red-400">{error}</p>}
+
+            {/* Cropped output preview */}
+            {resultUrl && (
+              <div className="flex items-center gap-2 p-1.5 bg-[#17161a] border border-sidebar-border rounded-sm w-full mt-2">
+                <img
+                  src={resultUrl}
+                  alt="Cropped Preview"
+                  className="h-10 w-10 object-cover rounded-xs border border-sidebar-border/80 shrink-0"
+                />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[11px] font-medium text-emerald-400">Cropped Output Ready</span>
+                  <span className="text-[10px] text-sidebar-foreground/60 truncate">Published to output handle</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Run button */}
           <Button
-            variant="outline"
+            variant="yellowButton"
             size="sm"
             onClick={runCrop}
             disabled={!activeImage || isRunning}
-            className="nodrag w-full rounded-sm gap-1.5 text-sm border-sidebar-border bg-yellow-bg py-5 text-black hover:bg-yellow-bg/80 hover:text-black disabled:opacity-40 mt-2"
+            className="nodrag w-full rounded-sm gap-1.5 text-sm py-5 font-semibold mt-2 cursor-pointer"
           >
             {isRunning ? (
               <>

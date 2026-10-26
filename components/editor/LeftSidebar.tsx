@@ -31,11 +31,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <div
       className={`${
-        isOpen ? "w-14" : "w-10"
-      } flex flex-col items-center h-full relative shrink-0 z-20 transition-all duration-200`}
+        isOpen
+          ? "w-14 bg-sidebar-background border-r border-sidebar-border"
+          : "w-0 border-r-0 bg-transparent overflow-visible"
+      } flex flex-col items-center h-full relative shrink-0 z-20 transition-all duration-200 select-none`}
     >
       {isOpen && (
-        <aside className="bg-sidebar-background text-sidebar-foreground border-r border-sidebar-border py-4 flex flex-col items-center h-full w-full">
+        <aside className="bg-sidebar-background text-sidebar-foreground py-4 flex flex-col items-center h-full w-full">
           <Cloud height="32px" width="32px" className="mb-8" />
 
           <TooltipProvider>
@@ -54,7 +56,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   </TooltipTrigger>
                   <TooltipContent
                     side="right"
-                    className="bg-sidebar-border"
+                    sideOffset={8}
+                    className="bg-[#212126] text-[#f2f0f8] border border-[#302e33] font-medium text-xs px-2.5 py-1.5 shadow-2xl rounded-md"
                   >
                     {item.name}
                   </TooltipContent>
@@ -67,14 +70,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       <button
         className={`${
-          isOpen ? "border-0 left-2" : "border border-sidebar-border left-1.5"
-        } rounded-md p-1 absolute bottom-4 z-50 bg-sidebar-background text-sidebar-foreground cursor-pointer hover:bg-button-hover`}
+          isOpen
+            ? "left-2 border-0 bg-sidebar-background"
+            : "left-3 border border-sidebar-border bg-[#1c1b1f] shadow-xl"
+        } rounded-md p-1.5 absolute bottom-4 z-50 text-sidebar-foreground cursor-pointer hover:bg-button-hover transition-colors`}
         onClick={() => setIsOpen((prev) => !prev)}
+        title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
       >
         {isOpen ? (
-          <ChevronLeft strokeWidth={1} />
+          <ChevronLeft strokeWidth={1.5} className="w-4 h-4" />
         ) : (
-          <ChevronRight strokeWidth={1} />
+          <ChevronRight strokeWidth={1.5} className="w-4 h-4" />
         )}
       </button>
     </div>

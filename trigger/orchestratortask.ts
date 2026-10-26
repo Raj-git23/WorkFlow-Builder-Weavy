@@ -20,6 +20,7 @@ export interface OrchestratePayload {
   nodes: Node[];
   edges: Edge[];
   selectedNodeIds?: string[];
+  initialOutputs?: Record<string, NodeOutputs>;
 }
 
 export const orchestrateWorkflowTask = task({
@@ -36,6 +37,7 @@ export const orchestrateWorkflowTask = task({
       nodes,
       edges,
       selectedNodeIds = [],
+      initialOutputs = {},
     } = payload;
 
     const startTime = Date.now();
@@ -84,8 +86,8 @@ export const orchestrateWorkflowTask = task({
       }
     }
 
-    // Runtime outputs dictionary across tiers
-    const completedOutputs: Record<string, NodeOutputs> = {};
+    // Runtime outputs dictionary across tiers (seeded with initialOutputs from canvas)
+    const completedOutputs: Record<string, NodeOutputs> = { ...initialOutputs };
     const newlyExecutedNodeIds = new Set<string>();
 
     let hasFailure = false;
@@ -137,19 +139,24 @@ export const orchestrateWorkflowTask = task({
                 (e) => e.target === node.id && newlyExecutedNodeIds.has(e.source)
               );
               const nodeData = (node.data || {}) as Record<string, any>;
+              const cachedOutput = initialOutputs[node.id];
 
               let nodeResult: NodeOutputs = {};
 
               // Delegate to worker task based on node type
               if (nodeType === "textArea") {
-                nodeResult = { text: String(taskPayload.text || "") };
+                nodeResult = { text: String(taskPayload.text || nodeData.value || "") };
               } else if (nodeType === "uploadImage") {
-                nodeResult = { imageUrl: String(taskPayload.imageUrl || "") };
+                nodeResult = { imageUrl: String(taskPayload.imageUrl || nodeData.url || "") };
               } else if (nodeType === "uploadVideo") {
-                nodeResult = { videoUrl: String(taskPayload.videoUrl || "") };
+                nodeResult = { videoUrl: String(taskPayload.videoUrl || nodeData.url || "") };
               } else if (nodeType === "cropImage") {
                 // Optimization: reuse existing cropped output if upstream hasn't changed
-                const existingCrop = nodeData.imageUrl || nodeData.url;
+                const existingCrop =
+                  cachedOutput?.imageUrl ||
+                  nodeData.imageUrl ||
+                  nodeData.url;
+
                 if (!hasFreshUpstream && existingCrop) {
                   nodeResult = {
                     imageUrl: String(existingCrop),
@@ -176,7 +183,11 @@ export const orchestrateWorkflowTask = task({
                 }
               } else if (nodeType === "extractFrame") {
                 // Optimization: reuse existing extracted frame if upstream video hasn't changed
-                const existingFrame = nodeData.imageUrl || nodeData.frameUrl;
+                const existingFrame =
+                  cachedOutput?.imageUrl ||
+                  nodeData.imageUrl ||
+                  nodeData.frameUrl;
+
                 if (!hasFreshUpstream && existingFrame) {
                   nodeResult = {
                     imageUrl: String(existingFrame),
@@ -202,20 +213,30 @@ export const orchestrateWorkflowTask = task({
                   newlyExecutedNodeIds.add(node.id);
                 }
               } else if (nodeType === "llm") {
-                const handle = await tasks.trigger<typeof geminiTask>(
-                  "run-gemini",
-                  taskPayload as any
-                );
-                const res = await runs.poll(handle, { pollIntervalMs: 1000 });
-                if (res.status !== "COMPLETED" || !res.output) {
-                  const taskErr =
-                    (res as any)?.error?.message ||
-                    (typeof (res as any)?.error === "string" ? (res as any).error : null) ||
-                    `LLM Execution failed: ${res.status}`;
-                  throw new Error(errorHandler.format(taskErr));
+                // Optimization: reuse existing generated text if upstream hasn't changed
+                const existingText =
+                  cachedOutput?.text ||
+                  nodeData.response ||
+                  nodeData.text;
+
+                if (!hasFreshUpstream && existingText) {
+                  nodeResult = { text: String(existingText) };
+                } else {
+                  const handle = await tasks.trigger<typeof geminiTask>(
+                    "run-gemini",
+                    taskPayload as any
+                  );
+                  const res = await runs.poll(handle, { pollIntervalMs: 1000 });
+                  if (res.status !== "COMPLETED" || !res.output) {
+                    const taskErr =
+                      (res as any)?.error?.message ||
+                      (typeof (res as any)?.error === "string" ? (res as any).error : null) ||
+                      `LLM Execution failed: ${res.status}`;
+                    throw new Error(errorHandler.format(taskErr));
+                  }
+                  nodeResult = { text: res.output.text };
+                  newlyExecutedNodeIds.add(node.id);
                 }
-                nodeResult = { text: res.output.text };
-                newlyExecutedNodeIds.add(node.id);
               }
 
               // Store output in memory for downstream nodes

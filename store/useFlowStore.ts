@@ -11,6 +11,7 @@ interface FlowStore {
   outputs: Record<string, NodeOutput>;
   edges: Edge[];
   runningNodeIds: string[];
+  workflowNodeIds: string[];
   activeRuns: Record<string, string[]>;
   currentRunId: string | null;
   workflowStatus: "idle" | "running" | "completed" | "failed";
@@ -28,6 +29,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   outputs: {},
   edges: [],
   runningNodeIds: [],
+  workflowNodeIds: [],
   activeRuns: {},
   currentRunId: null,
   workflowStatus: "idle",
@@ -55,10 +57,12 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   startRun: (runId: string, nodeIds: string[]) =>
     set((s) => {
       const updatedRuns = { ...s.activeRuns, [runId]: nodeIds };
-      const allRunning = Array.from(new Set([...s.runningNodeIds, ...nodeIds]));
+      const allWorkflowNodes = Array.from(
+        new Set([...s.workflowNodeIds, ...nodeIds])
+      );
       return {
         activeRuns: updatedRuns,
-        runningNodeIds: allRunning,
+        workflowNodeIds: allWorkflowNodes,
         workflowStatus: "running",
         currentRunId: runId,
       };
@@ -69,13 +73,14 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       const updatedRuns = { ...s.activeRuns };
       delete updatedRuns[runId];
 
-      const remainingNodeIds = Array.from(
+      const remainingWorkflowNodes = Array.from(
         new Set(Object.values(updatedRuns).flat())
       );
-      const hasActive = remainingNodeIds.length > 0;
+      const hasActive = remainingWorkflowNodes.length > 0;
       return {
         activeRuns: updatedRuns,
-        runningNodeIds: remainingNodeIds,
+        workflowNodeIds: remainingWorkflowNodes,
+        runningNodeIds: hasActive ? s.runningNodeIds : [],
         workflowStatus: hasActive ? "running" : "idle",
         currentRunId: hasActive ? Object.keys(updatedRuns)[0] : null,
       };
@@ -86,6 +91,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       workflowStatus,
       currentRunId: currentRunId !== undefined ? currentRunId : s.currentRunId,
       runningNodeIds: workflowStatus === "running" ? s.runningNodeIds : [],
+      workflowNodeIds: workflowStatus === "running" ? s.workflowNodeIds : [],
     })),
 
   getInput: (targetNodeId, handleId) => {
@@ -136,4 +142,11 @@ export function useNodeInput(targetNodeId: string, handleId?: string) {
  */
 export function useIsNodeRunning(nodeId: string) {
   return useFlowStore((s) => s.runningNodeIds.includes(nodeId));
+}
+
+/**
+ * Returns whether a node is part of the currently running workflow.
+ */
+export function useIsNodeInWorkflow(nodeId: string) {
+  return useFlowStore((s) => s.workflowNodeIds.includes(nodeId));
 }

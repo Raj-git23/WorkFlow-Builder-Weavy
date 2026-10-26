@@ -73,6 +73,39 @@ import { errorHandler } from "@/lib/error-handler";
 import { analyzeWorkflowSelection } from "@/lib/workflow-selection";
 import SidebarHistory from "./SidebarHistory";
 
+// Deduplicates loaded nodes and remaps edge endpoints to guarantee unique React keys
+function deduplicateNodesAndEdges(
+  inputNodes: Node[],
+  inputEdges: Edge[] = []
+): { nodes: Node[]; edges: Edge[] } {
+  const seenIds = new Set<string>();
+  const idRemap = new Map<string, string>();
+  const uniqueNodes: Node[] = [];
+
+  for (const node of inputNodes) {
+    if (!node || !node.id) continue;
+    if (seenIds.has(node.id)) {
+      const newId = genId((node.type as NodeType) || "textArea");
+      idRemap.set(node.id, newId);
+      uniqueNodes.push({ ...node, id: newId });
+      seenIds.add(newId);
+    } else {
+      seenIds.add(node.id);
+      uniqueNodes.push(node);
+    }
+  }
+
+  const uniqueEdges = inputEdges.map((edge) => {
+    let source = edge.source;
+    let target = edge.target;
+    if (idRemap.has(source)) source = idRemap.get(source)!;
+    if (idRemap.has(target)) target = idRemap.get(target)!;
+    return { ...edge, source, target };
+  });
+
+  return { nodes: uniqueNodes, edges: uniqueEdges };
+}
+
 //  Canvas
 
 export interface CanvasProps {
@@ -105,10 +138,24 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   const currentRunId = useFlowStore((s) => s.currentRunId);
   const setWorkflowStatus = useFlowStore((s) => s.setWorkflowStatus);
   const runningNodeIds = useFlowStore((s) => s.runningNodeIds);
+  const workflowNodeIds = useFlowStore((s) => s.workflowNodeIds);
   const activeRuns = useFlowStore((s) => s.activeRuns);
   const startRun = useFlowStore((s) => s.startRun);
   const finishRun = useFlowStore((s) => s.finishRun);
+  const setRunningNodes = useFlowStore((s) => s.setRunningNodes);
   const setOutputs = useFlowStore((s) => s.setOutputs);
+
+  // Active polling intervals tracker ref to prevent interval leakage or duplicate toasts
+  const activePollIntervalsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Cleanup polling intervals on unmount
+  useEffect(() => {
+    const intervals = activePollIntervalsRef.current;
+    return () => {
+      intervals.forEach((intervalId) => clearInterval(intervalId));
+      intervals.clear();
+    };
+  }, []);
 
   // Controls visibility of the Right History Drawer
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -120,6 +167,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
     Array<{ id: string; name: string; updatedAt: string; nodes: any; edges: any }>
   >([]);
   const [isLoadingWorkflow, setIsLoadingWorkflow] = useState<boolean>(true);
+  const [isStartingRun, setIsStartingRun] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasLoadedInitialWorkflow = useRef(false);
@@ -127,8 +175,11 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   const selectedNodes = nodes.filter((n) => n.selected);
   const selectionAnalysis = analyzeWorkflowSelection(nodes, edges, selectedNodes);
   const isSelectionRunning =
-    selectedNodes.length > 0 &&
-    selectedNodes.every((n) => runningNodeIds.includes(n.id));
+    isStartingRun ||
+    (selectedNodes.length > 0 &&
+      selectedNodes.some(
+        (n) => workflowNodeIds.includes(n.id) || runningNodeIds.includes(n.id)
+      ));
 
   useEffect(() => {
     nodesRef.current = nodes;
@@ -141,6 +192,8 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
 
   const handleRunWorkflow = useCallback(
     async (scope: "FULL" | "SELECTED" = "FULL") => {
+      if (isStartingRun) return;
+
       if (nodesRef.current.length === 0) {
         toast.warning("Add at least one node to run the workflow.");
         return;
@@ -156,16 +209,18 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
         return;
       }
 
-      // Check if all targeted nodes are already running in an active background run
-      const alreadyRunning = targetSelectedIds.every((id) =>
-        runningNodeIds.includes(id)
+      // Check if any targeted nodes are already running in an active background run
+      const alreadyRunning = targetSelectedIds.some(
+        (id) => workflowNodeIds.includes(id) || runningNodeIds.includes(id)
       );
       if (alreadyRunning) {
         toast.warning("This workflow is already running in the background.");
         return;
       }
 
-      // 1. Immediately start pulsating glow for all nodes in this workflow
+      setIsStartingRun(true);
+
+      // 1. Immediately register workflow run (highlights workflow nodes without pulsating glow)
       const tempRunId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       startRun(tempRunId, targetSelectedIds);
 
@@ -175,6 +230,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
           ? `Workflow started (${targetSelectedIds.length} nodes)!`
           : "Full workflow started!",
         {
+          id: `workflow_run_${tempRunId}`,
           description:
             "Running in the background. You can continue editing or run other workflows.",
           duration: 4000,
@@ -182,6 +238,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
       );
 
       try {
+        const currentOutputs = useFlowStore.getState().outputs;
         const res = await fetch("/api/workflows/run", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -192,6 +249,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
             selectedNodeIds: targetSelectedIds,
             nodes: nodesRef.current,
             edges: edgesRef.current,
+            initialOutputs: currentOutputs,
           }),
         });
 
@@ -200,12 +258,27 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
 
         const { runId } = data;
 
-        // Transition temporary run ID to real server runId while keeping nodes glowing
+        // Transition temporary run ID to real server runId
         finishRun(tempRunId);
         startRun(runId, targetSelectedIds);
 
         // 3. Poll execution status independently for this specific workflow run
+        let pollCount = 0;
         const pollInterval = setInterval(async () => {
+          pollCount++;
+          // Abort runaway polling after 10 minutes (600 polls)
+          if (pollCount > 600) {
+            clearInterval(pollInterval);
+            activePollIntervalsRef.current.delete(runId);
+            finishRun(runId);
+            setRunningNodes([]);
+            toast.error("Workflow run timed out.", {
+              id: `workflow_run_${runId}`,
+              duration: 6000,
+            });
+            return;
+          }
+
           try {
             const statusRes = await fetch(`/api/workflows/runs/${runId}`);
             if (!statusRes.ok) return;
@@ -213,9 +286,16 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
             const { run } = await statusRes.json();
             if (!run) return;
 
+            // Update currently active running nodes so ONLY executing node pulses
+            const nodeExecs = run.nodeExecutions || [];
+            const activeRunningIds = nodeExecs
+              .filter((ne: any) => ne.status === "RUNNING")
+              .map((ne: any) => ne.nodeId);
+            setRunningNodes(activeRunningIds);
+
             // Live populate completed node outputs
             const completedOutputs: Record<string, any> = {};
-            for (const ne of run.nodeExecutions || []) {
+            for (const ne of nodeExecs) {
               if (ne.status === "COMPLETED" && ne.outputs) {
                 completedOutputs[ne.nodeId] = ne.outputs;
               }
@@ -224,37 +304,71 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
               setOutputs(completedOutputs);
             }
 
-            // Check terminal state
-            if (run.status === "COMPLETED") {
+            // Check failure state (either run.status is FAILED or any node execution is FAILED)
+            const failedExec = nodeExecs.find((ne: any) => ne.status === "FAILED");
+            const isFailed = run.status === "FAILED" || Boolean(failedExec);
+
+            if (isFailed) {
               clearInterval(pollInterval);
+              activePollIntervalsRef.current.delete(runId);
               finishRun(runId);
-              const durationSec = (run.durationMs ? run.durationMs / 1000 : 0).toFixed(1);
-              toast.success(`Workflow completed successfully in ${durationSec}s!`, {
-                duration: 5000,
-              });
-            } else if (run.status === "FAILED") {
-              clearInterval(pollInterval);
-              finishRun(runId);
-              toast.error(errorHandler.format(run.error || "Workflow run failed"), {
+              setRunningNodes([]);
+              const err =
+                failedExec?.error ||
+                run.error ||
+                "Workflow execution failed.";
+              toast.error(errorHandler.format(err), {
+                id: `workflow_run_${runId}`,
                 duration: 6000,
               });
+              return;
+            }
+
+            // Check completion state
+            if (run.status === "COMPLETED") {
+              clearInterval(pollInterval);
+              activePollIntervalsRef.current.delete(runId);
+              finishRun(runId);
+              setRunningNodes([]);
+              const durationSec = (
+                run.durationMs ? run.durationMs / 1000 : 0
+              ).toFixed(1);
+              toast.success(
+                `Workflow completed successfully in ${durationSec}s!`,
+                {
+                  id: `workflow_run_${runId}`,
+                  duration: 5000,
+                }
+              );
+              return;
             }
           } catch (pollErr) {
             console.warn("Run polling notice:", pollErr);
           }
         }, 1000);
+
+        activePollIntervalsRef.current.set(runId, pollInterval);
       } catch (err: any) {
         finishRun(tempRunId);
-        toast.error(errorHandler.format(err));
+        setRunningNodes([]);
+        toast.error(errorHandler.format(err), {
+          id: `workflow_run_err_${Date.now()}`,
+          duration: 6000,
+        });
+      } finally {
+        setIsStartingRun(false);
       }
     },
     [
+      isStartingRun,
       selectedNodes,
+      workflowNodeIds,
       runningNodeIds,
       titleName,
       workflowId,
       startRun,
       finishRun,
+      setRunningNodes,
       setOutputs,
     ]
   );
@@ -332,12 +446,17 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
           setWorkflowId(targetWorkflow.id);
           if (targetWorkflow.name) setTitleName(targetWorkflow.name);
 
-          const loadedNodes = Array.isArray(targetWorkflow.nodes)
+          const rawNodes = Array.isArray(targetWorkflow.nodes)
             ? (targetWorkflow.nodes as Node[])
             : [];
-          const loadedEdges = Array.isArray(targetWorkflow.edges)
+          const rawEdges = Array.isArray(targetWorkflow.edges)
             ? (targetWorkflow.edges as Edge[])
             : [];
+
+          const { nodes: loadedNodes, edges: loadedEdges } = deduplicateNodesAndEdges(
+            rawNodes,
+            rawEdges
+          );
 
           if (loadedNodes.length > 0) {
             setNodes(loadedNodes);
@@ -405,6 +524,48 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
     };
   }, [nodes, edges, titleName, saveWorkflow]);
 
+  // We're saving history using debounce of 300 ms
+  const scheduleHistoryPush = useCallback(() => {
+    if (isRestoringRef.current) return;
+
+    if (!pendingSnapshotRef.current) {
+      pendingSnapshotRef.current = takeSnapshot(
+        nodesRef.current,
+        edgesRef.current,
+      );
+    }
+
+    if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
+    historyTimerRef.current = setTimeout(() => {
+      const snap = pendingSnapshotRef.current;
+      pendingSnapshotRef.current = null;
+      historyTimerRef.current = null;
+
+      if (snap) {
+        setPast((p) => [...p, snap].slice(-MAX_HISTORY));
+        setFuture([]);
+      }
+    }, 300);
+  }, []);
+
+  const pushNow = useCallback(() => {
+    if (isRestoringRef.current) return;
+
+    if (historyTimerRef.current) {
+      clearTimeout(historyTimerRef.current);
+      historyTimerRef.current = null;
+      pendingSnapshotRef.current = null;
+    }
+
+    setPast((p) =>
+      [...p, takeSnapshot(nodesRef.current, edgesRef.current)].slice(
+        -MAX_HISTORY,
+      ),
+    );
+
+    setFuture([]);
+  }, []);
+
   // Export canvas to downloadable JSON file
   const handleExportJSON = useCallback(() => {
     if (nodesRef.current.length === 0) {
@@ -451,20 +612,191 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
             );
           }
 
-          if (parsed.name) setTitleName(parsed.name);
-          setNodes(parsed.nodes);
-          setEdges(parsed.edges);
-          nodesRef.current = parsed.nodes;
-          edgesRef.current = parsed.edges;
-          syncEdges(parsed.edges);
+          const existingNodes = nodesRef.current || [];
+          const existingEdges = edgesRef.current || [];
+          const isCanvasEmpty = existingNodes.length === 0;
 
-          toast.success(
-            `Imported "${parsed.name || "Workflow"}" (${parsed.nodes.length} nodes)`
-          );
+          pushNow(); // Save current state to undo history before importing
 
-          setTimeout(() => {
-            saveWorkflow(parsed.name);
-          }, 500);
+          if (isCanvasEmpty) {
+            // Case 1: Empty canvas -> replace with imported nodes directly
+            if (parsed.name) setTitleName(parsed.name);
+
+            // Mark all imported nodes as selected
+            const selectedImportedNodes = parsed.nodes.map((n: any) => ({
+              ...n,
+              selected: true,
+            }));
+
+            setNodes(selectedImportedNodes);
+            setEdges(parsed.edges);
+            nodesRef.current = selectedImportedNodes;
+            edgesRef.current = parsed.edges;
+            syncEdges(parsed.edges);
+
+            // Restore initial node outputs into flow store
+            const initialOutputs: Record<string, any> = {};
+            for (const n of selectedImportedNodes) {
+              const d = n.data as any;
+              if (!d) continue;
+              if (n.type === "textArea" && d.value) {
+                initialOutputs[n.id] = { text: d.value };
+              } else if (n.type === "uploadImage" && d.url) {
+                initialOutputs[n.id] = { imageUrl: d.url };
+              } else if (n.type === "uploadVideo" && d.url) {
+                initialOutputs[n.id] = { videoUrl: d.url };
+              } else if (n.type === "cropImage" && (d.imageUrl || d.url)) {
+                initialOutputs[n.id] = { imageUrl: d.imageUrl || d.url };
+              } else if (n.type === "extractFrame" && (d.frameUrl || d.imageUrl)) {
+                initialOutputs[n.id] = { imageUrl: d.frameUrl || d.imageUrl };
+              } else if (n.type === "llm" && (d.response || d.text)) {
+                initialOutputs[n.id] = { text: d.response || d.text };
+              }
+            }
+            if (Object.keys(initialOutputs).length > 0) {
+              setOutputs(initialOutputs);
+            }
+
+            setTimeout(() => {
+              fitView({ padding: 0.15, duration: 500, maxZoom: 1 });
+              saveWorkflow(parsed.name);
+            }, 150);
+
+            toast.success(
+              `Imported "${parsed.name || "Workflow"}" (${parsed.nodes.length} nodes)`
+            );
+          } else {
+            // Case 2: Non-empty canvas -> merge into existing nodes without removing them
+            const existingNodeIds = new Set(existingNodes.map((n) => n.id));
+            const idMap = new Map<string, string>();
+
+            // Generate clean unique IDs for any imported nodes that collide with existing canvas nodes
+            for (const node of parsed.nodes) {
+              if (existingNodeIds.has(node.id)) {
+                const uniqueSuffix = Math.random().toString(36).slice(2, 6);
+                const newId = `${node.type || "node"}-${Date.now().toString(36)}-${uniqueSuffix}`;
+                idMap.set(node.id, newId);
+              } else {
+                idMap.set(node.id, node.id);
+              }
+            }
+
+            // Calculate bounding box of existing nodes
+            let maxExistingX = -Infinity;
+            let minExistingY = Infinity;
+            for (const n of existingNodes) {
+              const x = n.position?.x ?? 0;
+              const y = n.position?.y ?? 0;
+              const w = (n.measured?.width ?? (n as any).width ?? 320);
+              if (x + w > maxExistingX) maxExistingX = x + w;
+              if (y < minExistingY) minExistingY = y;
+            }
+            if (!isFinite(maxExistingX)) maxExistingX = 0;
+            if (!isFinite(minExistingY)) minExistingY = 0;
+
+            // Calculate bounding box of imported nodes
+            let minImportedX = Infinity;
+            let minImportedY = Infinity;
+            for (const n of parsed.nodes) {
+              const x = n.position?.x ?? 0;
+              const y = n.position?.y ?? 0;
+              if (x < minImportedX) minImportedX = x;
+              if (y < minImportedY) minImportedY = y;
+            }
+            if (!isFinite(minImportedX)) minImportedX = 0;
+            if (!isFinite(minImportedY)) minImportedY = 0;
+
+            // Offset imported nodes to the right of existing nodes with a 120px gap
+            const offsetX = maxExistingX + 120 - minImportedX;
+            const offsetY = minExistingY - minImportedY;
+
+            // Deselect all existing nodes
+            const updatedExistingNodes = existingNodes.map((n) => ({
+              ...n,
+              selected: false,
+            }));
+
+            // Prepare imported nodes with new positions, mapped IDs, and marked as selected
+            const preparedImportedNodes = parsed.nodes.map((n: any) => {
+              const finalId = idMap.get(n.id) || n.id;
+              return {
+                ...n,
+                id: finalId,
+                selected: true,
+                position: {
+                  x: Math.round((n.position?.x ?? 0) + offsetX),
+                  y: Math.round((n.position?.y ?? 0) + offsetY),
+                },
+              };
+            });
+
+            // Prepare imported edges with remapped node IDs & handles, and marked as selected
+            const existingEdgeIds = new Set(existingEdges.map((e) => e.id));
+            const preparedImportedEdges = parsed.edges.map((e: any) => {
+              const newSource = idMap.get(e.source) || e.source;
+              const newTarget = idMap.get(e.target) || e.target;
+              const sourceHandle = e.sourceHandle
+                ? e.sourceHandle.replace(e.source, newSource)
+                : e.sourceHandle;
+              const targetHandle = e.targetHandle
+                ? e.targetHandle.replace(e.target, newTarget)
+                : e.targetHandle;
+              const edgeId = existingEdgeIds.has(e.id)
+                ? `edge-${newSource}-${newTarget}-${Math.random().toString(36).slice(2, 6)}`
+                : e.id;
+
+              return {
+                ...e,
+                id: edgeId,
+                source: newSource,
+                target: newTarget,
+                sourceHandle,
+                targetHandle,
+                selected: true,
+              };
+            });
+
+            const mergedNodes = [...updatedExistingNodes, ...preparedImportedNodes];
+            const mergedEdges = [...existingEdges, ...preparedImportedEdges];
+
+            setNodes(mergedNodes);
+            setEdges(mergedEdges);
+            nodesRef.current = mergedNodes;
+            edgesRef.current = mergedEdges;
+            syncEdges(mergedEdges);
+
+            // Register initial outputs of newly imported nodes into flow store
+            const importedOutputs: Record<string, any> = {};
+            for (const n of preparedImportedNodes) {
+              const d = n.data as any;
+              if (!d) continue;
+              if (n.type === "textArea" && d.value) {
+                importedOutputs[n.id] = { text: d.value };
+              } else if (n.type === "uploadImage" && d.url) {
+                importedOutputs[n.id] = { imageUrl: d.url };
+              } else if (n.type === "uploadVideo" && d.url) {
+                importedOutputs[n.id] = { videoUrl: d.url };
+              } else if (n.type === "cropImage" && (d.imageUrl || d.url)) {
+                importedOutputs[n.id] = { imageUrl: d.imageUrl || d.url };
+              } else if (n.type === "extractFrame" && (d.frameUrl || d.imageUrl)) {
+                importedOutputs[n.id] = { imageUrl: d.frameUrl || d.imageUrl };
+              } else if (n.type === "llm" && (d.response || d.text)) {
+                importedOutputs[n.id] = { text: d.response || d.text };
+              }
+            }
+            if (Object.keys(importedOutputs).length > 0) {
+              setOutputs(importedOutputs);
+            }
+
+            setTimeout(() => {
+              fitView({ padding: 0.15, duration: 500, maxZoom: 1 });
+              saveWorkflow(titleName);
+            }, 150);
+
+            toast.success(
+              `Imported and merged ${parsed.nodes.length} nodes into canvas (selected)`
+            );
+          }
         } catch (err: any) {
           toast.error(
             err instanceof Error ? err.message : "Failed to import workflow JSON"
@@ -476,50 +808,8 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
 
       reader.readAsText(file);
     },
-    [setNodes, setEdges, syncEdges, saveWorkflow]
+    [pushNow, titleName, setNodes, setEdges, syncEdges, setOutputs, fitView, saveWorkflow]
   );
-
-  // We're saving history using debounce of 300 ms
-  const scheduleHistoryPush = useCallback(() => {
-    if (isRestoringRef.current) return;
-
-    if (!pendingSnapshotRef.current) {
-      pendingSnapshotRef.current = takeSnapshot(
-        nodesRef.current,
-        edgesRef.current,
-      );
-    }
-
-    if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
-    historyTimerRef.current = setTimeout(() => {
-      const snap = pendingSnapshotRef.current;
-      pendingSnapshotRef.current = null;
-      historyTimerRef.current = null;
-
-      if (snap) {
-        setPast((p) => [...p, snap].slice(-MAX_HISTORY));
-        setFuture([]);
-      }
-    }, 300);
-  }, []);
-
-  const pushNow = useCallback(() => {
-    if (isRestoringRef.current) return;
-
-    if (historyTimerRef.current) {
-      clearTimeout(historyTimerRef.current);
-      historyTimerRef.current = null;
-      pendingSnapshotRef.current = null;
-    }
-
-    setPast((p) =>
-      [...p, takeSnapshot(nodesRef.current, edgesRef.current)].slice(
-        -MAX_HISTORY,
-      ),
-    );
-
-    setFuture([]);
-  }, []);
 
   // Fetch user's saved workflows from API
   const refreshSavedWorkflows = useCallback(async () => {
@@ -580,8 +870,12 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
       setIsLoadingWorkflow(true);
       setWorkflowId(wf.id);
       setTitleName(wf.name || "Untitled Workflow");
-      const loadedNodes = Array.isArray(wf.nodes) ? wf.nodes : [];
-      const loadedEdges = Array.isArray(wf.edges) ? wf.edges : [];
+      const rawNodes = Array.isArray(wf.nodes) ? wf.nodes : [];
+      const rawEdges = Array.isArray(wf.edges) ? wf.edges : [];
+      const { nodes: loadedNodes, edges: loadedEdges } = deduplicateNodesAndEdges(
+        rawNodes,
+        rawEdges
+      );
       setNodes(loadedNodes);
       setEdges(loadedEdges);
       nodesRef.current = loadedNodes;
@@ -772,13 +1066,26 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
   const spawnNode = useCallback(
     (type: NodeType, position: { x: number; y: number }, data?: Record<string, unknown>) => {
       pushNow();
+      const existingIds = new Set(nodesRef.current.map((n) => n.id));
+      let safeId = genId(type);
+      while (existingIds.has(safeId)) {
+        safeId = genId(type);
+      }
       const newNode: Node = {
-        id: genId(type),
+        id: safeId,
         type,
         position,
         data: { ...(data ?? DEFAULT_DATA[type]) }, // Initialise a node with some values
       };
-      setNodes((nds) => [...nds, newNode]);
+      setNodes((nds) => {
+        const currentSeen = new Set<string>();
+        const clean = nds.filter((n) => {
+          if (currentSeen.has(n.id)) return false;
+          currentSeen.add(n.id);
+          return true;
+        });
+        return [...clean, newNode];
+      });
       return newNode;
     },
     [setNodes, pushNow],
@@ -900,7 +1207,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
 
   return (
     <NodeActionsContext.Provider value={{ duplicateNode, deleteNode }}>
-      <main className="flex h-screen w-screen overflow-hidden">
+      <main className="flex h-screen w-screen overflow-hidden bg-[#0a0a0a]">
         <LeftSidebar
           onAddNode={handleAddNode}
           onDragStart={handleDragStart}
@@ -1135,7 +1442,7 @@ export function Canvas({ initialWorkflowId }: CanvasProps = {}) {
                   onClick={() => handleRunWorkflow(selectionAnalysis.scope)}
                   className={cn(
                     "bg-[#f7ffa8] hover:bg-[#ebf495] text-black font-semibold text-xs h-9 px-3.5 gap-1.5 shadow-md transition-all active:scale-95 cursor-pointer",
-                    isSelectionRunning && "opacity-80 cursor-not-allowed"
+                    isSelectionRunning && "opacity-75 cursor-not-allowed pointer-events-none"
                   )}
                 >
                   {isSelectionRunning ? (
