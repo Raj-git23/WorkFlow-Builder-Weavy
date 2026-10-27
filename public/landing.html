@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weavy | Node-Based Multimodal Media & AI Workflows</title>
+  <meta name="description" content="Turn your creative vision into scalable workflows. Chain video frame extraction, precision cropping, and Google Gemini models on a visual node-based platform." />
+  
+  <!-- Modern Clean Typography (Plus Jakarta Sans, Inter, JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* -------------------------------------------------------------
+       CSS RESET & FIGMA WEAVE INSP DESIGN TOKENS
+       ------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    :root {
+      --bg-black: #08080a;
+      --bg-surface: #101014;
+      --bg-surface-elevated: #16161c;
+      --bg-surface-hover: #1f1f27;
+      --border-subtle: #22222a;
+      --border-medium: #2e2e3a;
+      --border-highlight: #3f3f50;
+
+      --text-primary: #ffffff;
+      --text-secondary: #9a9ab0;
+      --text-muted: #5f5f72;
+
+      /* Signature Weave / Weavy energetic pale lime */
+      --accent: #f7ff9e;
+      --accent-dark: #0f1008;
+      --accent-hover: #eef78b;
+      --accent-subtle: rgba(247, 255, 158, 0.08);
+      --accent-border: rgba(247, 255, 158, 0.25);
+
+      --color-blue: #38bdf8;
+      --color-green: #4ade80;
+      --color-purple: #c084fc;
+
+      --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html, body {
+      background-color: var(--bg-black);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.5;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    ::selection {
+      background: var(--accent);
+      color: var(--accent-dark);
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    /* -------------------------------------------------------------
+       TOP ANNOUNCEMENT BAR (Weave Style)
+       ------------------------------------------------------------- */
+    .top-banner {
+      background: #0d0d11;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 13px;
+      padding: 10px 16px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-secondary);
+    }
+
+    .top-banner strong {
+      color: var(--text-primary);
+    }
+
+    .top-banner a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.15s;
+    }
+
+    .top-banner a:hover {
+      opacity: 0.8;
+    }
+
+    /* -------------------------------------------------------------
+       NAVIGATION BAR
+       ------------------------------------------------------------- */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      background: rgba(8, 8, 10, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .nav-inner {
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: var(--accent-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 17px;
+      letter-spacing: -0.05em;
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      list-style: none;
+    }
+
+    .nav-menu a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+      transition: color 0.15s ease;
+    }
+
+    .nav-menu a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 9999px; /* Pill button like Weave */
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-pill-accent {
+      background-color: var(--accent);
+      color: var(--accent-dark);
+      border-color: var(--accent);
+    }
+
+    .btn-pill-accent:hover {
+      background-color: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-pill-ghost {
+      background-color: transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-pill-ghost:hover {
+      color: var(--text-primary);
+    }
+
+    .btn-pill-outline {
+      background-color: var(--bg-surface);
+      border-color: var(--border-medium);
+      color: var(--text-primary);
+    }
+
+    .btn-pill-outline:hover {
+      background-color: var(--bg-surface-elevated);
+      border-color: var(--border-highlight);
+    }
+
+    /* -------------------------------------------------------------
+       HERO SECTION WITH EDITORIAL TYPOGRAPHY (Weave Style)
+       ------------------------------------------------------------- */
+    .hero-section {
+      padding: 70px 0 30px 0;
+      position: relative;
+    }
+
+    .hero-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: flex-end;
+      margin-bottom: 54px;
+    }
+
+    @media (max-width: 960px) {
+      .hero-header {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+
+    .hero-title-main {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 6.2vw, 84px);
+      font-weight: 800;
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      color: var(--text-primary);
+    }
+
+    .hero-title-sub {
+      color: var(--accent);
+      display: block;
+    }
+
+    .hero-copy-block {
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .hero-description {
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* -------------------------------------------------------------
+       INTERACTIVE DRAGGABLE NODE CANVAS STAGE
+       ------------------------------------------------------------- */
+    .hero-canvas-frame {
+      position: relative;
+      background: #0c0c10;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+      margin-bottom: 90px;
+    }
+
+    .canvas-top-bar {
+      height: 48px;
+      background: #111117;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-secondary);
+      user-select: none;
+    }
+
+    .canvas-top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .canvas-dot-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-green);
+      box-shadow: 0 0 10px var(--color-green);
+    }
+
+    .canvas-stage-area {
+      height: 580px;
+      position: relative;
+      background-color: #0b0b0f;
+      background-image: radial-gradient(#1e1e28 1px, transparent 1px);
+      background-size: 24px 24px;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    /* Draggable Node Cards */
+    .drag-node {
+      position: absolute;
+      width: 250px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+      cursor: grab;
+      user-select: none;
+      z-index: 10;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .drag-node:active {
+      cursor: grabbing;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    }
+
+    .drag-node.node-running {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px rgba(247, 255, 158, 0.35);
+    }
+
+    .node-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .node-header-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .node-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .node-media-box {
+      width: 100%;
+      height: 105px;
+      background: #09090c;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 12px;
+      position: relative;
+    }
+
+    .node-media-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Port Plugs on Node */
+    .port-plug {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #424254;
+      border: 2px solid var(--bg-surface);
+      z-index: 12;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+
+    .port-plug.in {
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .port-plug.out {
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .drag-node:hover .port-plug {
+      background: var(--accent);
+      transform: translateY(-50%) scale(1.15);
+    }
+
+    /* SVG Connecting Wire Overlay */
+    .wires-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .wire-line {
+      fill: none;
+      stroke: #333345;
+      stroke-width: 2.2;
+      transition: stroke 0.2s;
+    }
+
+    .wire-line.active {
+      stroke: var(--accent);
+      stroke-width: 2.6;
+    }
+
+    /* -------------------------------------------------------------
+       SECTION: "ALL AI MODELS, UNITED AT LAST" (Weave Interactive)
+       ------------------------------------------------------------- */
+    .models-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .models-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 960px) {
+      .models-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .models-left-sticky {
+      position: sticky;
+      top: 120px;
+    }
+
+    .eyebrow-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+
+    .section-headline {
+      font-family: var(--font-display);
+      font-size: clamp(34px, 4vw, 52px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.035em;
+      margin-bottom: 20px;
+    }
+
+    .section-text {
+      font-size: 16.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    /* Model Interactive List */
+    .models-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .model-row {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .model-row:hover, .model-row.active {
+      background: var(--bg-surface-elevated);
+      border-color: var(--border-highlight);
+      transform: translateX(6px);
+    }
+
+    .model-row.active {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 25px rgba(247, 255, 158, 0.08);
+    }
+
+    .model-name {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      transition: color 0.15s;
+    }
+
+    .model-row:hover .model-name, .model-row.active .model-name {
+      color: var(--accent);
+    }
+
+    .model-details {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* -------------------------------------------------------------
+       SECTION: "PROFESSIONAL EDITING PRIMITIVES" (Weave Chips Style)
+       ------------------------------------------------------------- */
+    .tools-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .tools-header {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 50px auto;
+    }
+
+    .tools-chips-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 40px;
+    }
+
+    .tool-chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 13.5px;
+      font-weight: 500;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .tool-chip:hover, .tool-chip.active {
+      background: var(--accent);
+      color: var(--accent-dark);
+      border-color: var(--accent);
+      font-weight: 600;
+      transform: translateY(-2px);
+    }
+
+    /* Interactive Center Stage Box */
+    .tool-center-display {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (max-width: 900px) {
+      .tool-center-display {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .tool-preview-media {
+      background: #09090d;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 380px;
+      border-right: 1px solid var(--border-subtle);
+      position: relative;
+    }
+
+    .tool-preview-content {
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .tool-preview-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 14px;
+    }
+
+    .tool-preview-desc {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .spec-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .spec-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .spec-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .spec-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* -------------------------------------------------------------
+       SECTION: ARCHITECTURE & RELIABILITY
+       ------------------------------------------------------------- */
+    .arch-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 860px) {
+      .arch-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .arch-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .arch-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+
+    .arch-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .arch-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* -------------------------------------------------------------
+       SECTION: PRICING (Sleek Weave Style)
+       ------------------------------------------------------------- */
+    .pricing-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .pricing-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .pricing-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .price-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .price-box.highlight {
+      background: #14141c;
+      border-color: var(--accent-border);
+      position: relative;
+    }
+
+    .plan-header {
+      margin-bottom: 24px;
+    }
+
+    .plan-badge-top {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .plan-number {
+      font-family: var(--font-display);
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .plan-number span {
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .plan-features-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin: 32px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .plan-features-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .plan-features-list li svg {
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* -------------------------------------------------------------
+       FOOTER
+       ------------------------------------------------------------- */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 70px 0 50px 0;
+      background: #060608;
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 30px;
+    }
+
+    .footer-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .footer-links-group {
+      display: flex;
+      gap: 28px;
+    }
+
+    .footer-links-group a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      transition: color 0.15s;
+    }
+
+    .footer-links-group a:hover {
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Announcement Bar (Weave Inspired) -->
+  <aside class="top-banner">
+    <span><strong>Weavy v2.0 is Live.</strong> Trigger.dev v3 concurrency & smart upstream node caching are now enabled.</span>
+    <a href="http://localhost:3000" target="_blank">Open Canvas &rarr;</a>
+  </aside>
+
+  <!-- Navigation -->
+  <header class="nav-bar">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <div class="brand-mark">W</div>
+        <span>Weavy</span>
+      </a>
+
+      <nav class="nav-menu">
+        <a href="#models">Models</a>
+        <a href="#primitives">Primitives</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="http://localhost:3000" class="btn btn-pill-accent">
+          <span>Open Canvas</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-header">
+        <h1 class="hero-title-main">
+          Artistic<br>
+          <span class="hero-title-sub">Intelligence.</span>
+        </h1>
+
+        <div class="hero-copy-block">
+          <p class="hero-description">
+            Turn your creative vision into scalable workflows. Access Google Gemini multimodal models, sub-second video frame extraction, and precision cropping on an infinite node canvas.
+          </p>
+
+          <div class="hero-actions">
+            <a href="http://localhost:3000" class="btn btn-pill-accent">
+              <span>Start Building Free</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </a>
+            <button id="runSimAction" class="btn btn-pill-outline" onclick="triggerLiveSimulation()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span id="runSimLabel">Run Pipeline Simulation</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Draggable Node Canvas Mockup -->
+      <div class="hero-canvas-frame">
+        <div class="canvas-top-bar">
+          <div class="canvas-top-bar-left">
+            <div class="canvas-dot-indicator"></div>
+            <span>product-marketing-kit.weavy</span>
+          </div>
+
+          <div style="display: flex; gap: 16px; align-items: center;">
+            <span style="color: var(--text-muted); font-size: 11px;">Tip: Drag any node card freely</span>
+            <span id="stageStatusPill" class="node-badge" style="color: var(--accent); border-color: var(--accent-border);">● Ready</span>
+          </div>
+        </div>
+
+        <div class="canvas-stage-area" id="stageArea">
+          <!-- Dynamic SVG Curved Connectors -->
+          <svg class="wires-overlay" id="wiresSvg">
+            <path id="path_node1_node2" class="wire-line" d=""></path>
+            <path id="path_node2_node3" class="wire-line" d=""></path>
+            <path id="path_node3_node5" class="wire-line" d=""></path>
+            <path id="path_node4_node5" class="wire-line" d=""></path>
+          </svg>
+
+          <!-- Node 1: Video Ingestion -->
+          <div class="drag-node" id="node1" style="left: 40px; top: 80px;">
+            <div class="node-top">
+              <span class="node-header-name">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                Media Upload
+              </span>
+              <span class="node-badge">video/mp4</span>
+            </div>
+            <div class="node-media-box">
+              <div style="font-size: 26px; margin-bottom: 2px;">🎬</div>
+              <span style="font-family: var(--font-mono); font-size: 11px;">product-hero-reel.mp4</span>
+            </div>
+            <div class="port-plug out"></div>
+          </div>
+
+          <!-- Node 2: Extract Frame -->
+          <div class="drag-node" id="node2" style="left: 360px; top: 80px;">
+            <div class="node-top">
+              <span class="node-header-name">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                Extract Frame
+              </span>
+              <span class="node-badge">@ 00:03.20</span>
+            </div>
+            <div class="node-media-box" id="node2Box">
+              <span id="node2Label" style="font-family: var(--font-mono); font-size: 11px;">Waiting for seek...</span>
+            </div>
+            <div class="port-plug in"></div>
+            <div class="port-plug out"></div>
+          </div>
+
+          <!-- Node 3: Precision Crop -->
+          <div class="drag-node" id="node3" style="left: 680px; top: 80px;">
+            <div class="node-top">
+              <span class="node-header-name">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                Aspect Crop
+              </span>
+              <span class="node-badge">1:1 Square</span>
+            </div>
+            <div class="node-media-box" id="node3Box">
+              <span id="node3Label" style="font-family: var(--font-mono); font-size: 11px;">1080 &times; 1080</span>
+            </div>
+            <div class="port-plug in"></div>
+            <div class="port-plug out"></div>
+          </div>
+
+          <!-- Node 4: Text Prompt -->
+          <div class="drag-node" id="node4" style="left: 40px; top: 310px; width: 280px;">
+            <div class="node-top">
+              <span class="node-header-name">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                Copywriter Prompt
+              </span>
+              <span class="node-badge">system instruction</span>
+            </div>
+            <div class="node-media-box" style="height: 90px; padding: 12px; font-family: var(--font-mono); font-size: 11px; text-align: left; justify-content: flex-start; color: var(--text-secondary);">
+              "Generate 3 viral social ad variants analyzing the cropped product image..."
+            </div>
+            <div class="port-plug out"></div>
+          </div>
+
+          <!-- Node 5: Multimodal Gemini LLM -->
+          <div class="drag-node" id="node5" style="left: 680px; top: 280px; width: 330px;">
+            <div class="node-top">
+              <span class="node-header-name">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                Gemini 2.5 Flash
+              </span>
+              <span class="node-badge" style="color: var(--accent); border-color: var(--accent-border);">Multimodal</span>
+            </div>
+            <div class="node-media-box" id="node5Box" style="height: 140px; padding: 12px; font-family: var(--font-mono); font-size: 11px; text-align: left; justify-content: flex-start; overflow-y: auto;">
+              <span id="node5Text" style="color: var(--text-muted);">[Click "Run Pipeline Simulation" above to execute]</span>
+            </div>
+            <div class="port-plug in"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Models Section (Interactive Split List Inspired by Weave) -->
+  <section class="models-section" id="models">
+    <div class="container">
+      <div class="models-layout">
+        <div class="models-left-sticky">
+          <span class="eyebrow-tag">Orchestration</span>
+          <h2 class="section-headline">Use all models & media engines, together at last.</h2>
+          <p class="section-text">
+            No more disconnected scripts or disparate API wrappers. Weavy unites multimodal LLMs, cloud encoders, and high-speed FFmpeg filters under a singular topological graph engine.
+          </p>
+
+          <a href="http://localhost:3000" class="btn btn-pill-accent">
+            <span>Explore Canvas Primitives</span>
+          </a>
+        </div>
+
+        <div class="models-list">
+          <div class="model-row active" onclick="selectModel(this, 'gemini')">
+            <div>
+              <div class="model-name">Google Gemini 2.5 Flash</div>
+              <div class="model-details">Sub-second Multimodal Visual Reasoning &bull; 1M Context Window</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <div class="model-row" onclick="selectModel(this, 'gemini-pro')">
+            <div>
+              <div class="model-name">Google Gemini 2.5 Pro</div>
+              <div class="model-details">Complex Multimodal Creative Direction & Multi-Turn Visual Synthesis</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <div class="model-row" onclick="selectModel(this, 'transloadit')">
+            <div>
+              <div class="model-name">Transloadit Cloud Assembly</div>
+              <div class="model-details">Direct Client S3/CDN Ingestion &bull; Zero Serverless Payload Limits</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <div class="model-row" onclick="selectModel(this, 'ffmpeg')">
+            <div>
+              <div class="model-name">Native FFmpeg Worker Tasks</div>
+              <div class="model-details">Direct Stream Seeking, Aspect Ratio Math, Keyframe Preservation</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <div class="model-row" onclick="selectModel(this, 'trigger')">
+            <div>
+              <div class="model-name">Trigger.dev v3 Concurrency</div>
+              <div class="model-details">Decoupled Background Task Queues with 10-Minute Maximum Durations</div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Professional Primitives Section (Weave Interactive Chips Style) -->
+  <section class="tools-section" id="primitives">
+    <div class="container">
+      <div class="tools-header">
+        <span class="eyebrow-tag">Tool Ecosystem</span>
+        <h2 class="section-headline">With all the precision tools you rely on.</h2>
+        <p class="section-text">Every node is a pure, reproducible function that accepts typed inputs and emits cached outputs across your workflow.</p>
+      </div>
+
+      <div class="tools-chips-row">
+        <button class="tool-chip active" onclick="selectToolChip(this, 'crop')">Aspect Ratio Crop</button>
+        <button class="tool-chip" onclick="selectToolChip(this, 'extract')">Frame Extraction</button>
+        <button class="tool-chip" onclick="selectToolChip(this, 'llm')">Multimodal LLM</button>
+        <button class="tool-chip" onclick="selectToolChip(this, 'prompt')">Text Prompt Node</button>
+        <button class="tool-chip" onclick="selectToolChip(this, 'merge')">Smart Graph Merge</button>
+        <button class="tool-chip" onclick="selectToolChip(this, 'caching')">Upstream Cache</button>
+      </div>
+
+      <!-- Center Display Box -->
+      <div class="tool-center-display">
+        <div class="tool-preview-media" id="toolMedia">
+          <div style="font-family: var(--font-mono); font-size: 13px; text-align: left; width: 100%; color: #9da0b5; line-height: 1.8;">
+            <div style="color: var(--accent); margin-bottom: 8px;">// Filter: FFmpeg Dynamic Dimension Evaluation</div>
+            <div>crop=iw*width/100 : ih*height/100 : iw*x/100 : ih*y/100</div>
+            <div style="margin-top: 16px; color: var(--color-green);">✓ Zero resolution distortion</div>
+            <div style="color: var(--color-green);">✓ Automatic input width/height detection</div>
+          </div>
+        </div>
+
+        <div class="tool-preview-content">
+          <h3 class="tool-preview-title" id="toolTitle">Aspect Ratio Crop</h3>
+          <p class="tool-preview-desc" id="toolDesc">
+            Interactive visual cropping interface. Translates bounding rectangle dimensions natively into percentage-based FFmpeg filters, ensuring 1:1, 9:16, or 16:9 crops stay pin-sharp regardless of the source video resolution.
+          </p>
+
+          <div class="spec-grid">
+            <div class="spec-item">
+              <span class="spec-label">Input Type</span>
+              <span class="spec-value" id="toolIn">Image / Extracted Frame</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Output Type</span>
+              <span class="spec-value" id="toolOut">Transloadit SSL URL + DataURL</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture & Engine Specifications -->
+  <section class="arch-section" id="architecture">
+    <div class="container">
+      <div class="tools-header">
+        <span class="eyebrow-tag">Architecture</span>
+        <h2 class="section-headline">Engineered for rock-solid execution.</h2>
+        <p class="section-text">Built to eliminate serverless timeouts, memory leaks, and cascading API quota failures.</p>
+      </div>
+
+      <div class="arch-grid">
+        <div class="arch-card">
+          <div class="arch-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          </div>
+          <h3 class="arch-title">Concurrency & Rate Limiting</h3>
+          <p class="arch-desc">
+            Configured with Trigger.dev v3 concurrency slots (Option C), capping heavy orchestrator tasks so your workflows never trigger provider 429 quotas.
+          </p>
+        </div>
+
+        <div class="arch-card">
+          <div class="arch-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </div>
+          <h3 class="arch-title">Upstream Cache Reuse</h3>
+          <p class="arch-desc">
+            Nodes check their incoming dependency graph on each run. If upstream video or image inputs are unchanged, precomputed results are re-used instantly.
+          </p>
+        </div>
+
+        <div class="arch-card">
+          <div class="arch-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+          </div>
+          <h3 class="arch-title">Non-Destructive Graph Merging</h3>
+          <p class="arch-desc">
+            Import existing JSON workflow pipelines into active canvases without overwriting your workspace. Conflicting node IDs are re-mapped on the fly.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing-section" id="pricing">
+    <div class="container">
+      <div class="tools-header">
+        <span class="eyebrow-tag">Membership</span>
+        <h2 class="section-headline">Start building without restrictions.</h2>
+        <p class="section-text">Bring your own API keys or scale with enterprise concurrency limits.</p>
+      </div>
+
+      <div class="pricing-wrap">
+        <div class="price-box">
+          <div class="plan-header">
+            <div class="plan-badge-top">COMMUNITY CREATOR</div>
+            <div class="plan-number">$0 <span>/ month</span></div>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">Everything you need to orchestrate personal multimodal AI pipelines.</p>
+          </div>
+
+          <ul class="plan-features-list">
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Unlimited Visual Canvas Graphs
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Bring Your Own Gemini API Key
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              JSON Pipeline Export & Merged Imports
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Full Execution History & Run Timeline
+            </li>
+          </ul>
+
+          <a href="http://localhost:3000" class="btn btn-pill-outline" style="width: 100%;">Open Canvas</a>
+        </div>
+
+        <div class="price-box highlight">
+          <div class="plan-header">
+            <div class="plan-badge-top">PRODUCTION TEAM</div>
+            <div class="plan-number">$29 <span>/ month</span></div>
+            <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">For creative studios and high-volume media operations.</p>
+          </div>
+
+          <ul class="plan-features-list">
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Managed High-Throughput Worker Slots
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Headless Webhook & API Execution Triggers
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Dedicated Transloadit CDN Buckets
+            </li>
+            <li>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Shared Team Blueprints & Role Permissions
+            </li>
+          </ul>
+
+          <a href="http://localhost:3000" class="btn btn-pill-accent" style="width: 100%;">Upgrade to Pro</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-content">
+      <div class="footer-left">
+        <a href="#" class="brand">
+          <div class="brand-mark">W</div>
+          <span>Weavy</span>
+        </a>
+        <span class="footer-meta">&copy; 2026 Weavy Workflow Studio. Built for creative engineers.</span>
+      </div>
+
+      <div class="footer-links-group">
+        <a href="http://localhost:3000">Launch Editor</a>
+        <a href="https://github.com" target="_blank">GitHub</a>
+        <a href="https://trigger.dev" target="_blank">Trigger.dev</a>
+        <a href="https://transloadit.com" target="_blank">Transloadit</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- -------------------------------------------------------------
+       INTERACTIVE CANVAS ENGINE: DRAGGABLE NODES & FLUID WIRES
+       ------------------------------------------------------------- -->
+  <script>
+    // Node Connection Graph
+    const connections = [
+      { from: 'node1', to: 'node2', pathId: 'path_node1_node2' },
+      { from: 'node2', to: 'node3', pathId: 'path_node2_node3' },
+      { from: 'node3', to: 'node5', pathId: 'path_node3_node5' },
+      { from: 'node4', to: 'node5', pathId: 'path_node4_node5' }
+    ];
+
+    const stage = document.getElementById('stageArea');
+
+    // Recalculates Bezier paths between connected nodes
+    function updateWires() {
+      const stageRect = stage.getBoundingClientRect();
+
+      connections.forEach(conn => {
+        const fromEl = document.getElementById(conn.from);
+        const toEl = document.getElementById(conn.to);
+        const pathEl = document.getElementById(conn.pathId);
+
+        if (!fromEl || !toEl || !pathEl) return;
+
+        const fromRect = fromEl.getBoundingClientRect();
+        const toRect = toEl.getBoundingClientRect();
+
+        // Coordinates relative to stage container
+        const x1 = (fromRect.right - stageRect.left);
+        const y1 = (fromRect.top + fromRect.height / 2 - stageRect.top);
+
+        const x2 = (toRect.left - stageRect.left);
+        const y2 = (toRect.top + toRect.height / 2 - stageRect.top);
+
+        // Fluid cubic bezier curve
+        const dx = Math.abs(x2 - x1) * 0.55;
+        const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+        pathEl.setAttribute('d', d);
+      });
+    }
+
+    // Draggable Functionality for Hero Cards
+    function setupDraggables() {
+      const nodes = document.querySelectorAll('.drag-node');
+
+      nodes.forEach(node => {
+        let isDragging = false;
+        let startX, startY, origX, origY;
+
+        function onMouseDown(e) {
+          isDragging = true;
+          startX = e.clientX;
+          startY = e.clientY;
+          origX = node.offsetLeft;
+          origY = node.offsetTop;
+          node.style.zIndex = '50';
+
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function onMouseMove(e) {
+          if (!isDragging) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+
+          const stageWidth = stage.offsetWidth;
+          const stageHeight = stage.offsetHeight;
+          const nodeWidth = node.offsetWidth;
+          const nodeHeight = node.offsetHeight;
+
+          // Keep within bounds
+          const nextX = Math.max(10, Math.min(stageWidth - nodeWidth - 10, origX + dx));
+          const nextY = Math.max(10, Math.min(stageHeight - nodeHeight - 10, origY + dy));
+
+          node.style.left = `${nextX}px`;
+          node.style.top = `${nextY}px`;
+
+          updateWires();
+        }
+
+        function onMouseUp() {
+          isDragging = false;
+          node.style.zIndex = '10';
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        node.addEventListener('mousedown', onMouseDown);
+      });
+    }
+
+    // Interactive Model Switcher
+    function selectModel(el, key) {
+      document.querySelectorAll('.model-row').forEach(row => row.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // Interactive Tool Chips (Weave Center Display)
+    const TOOL_DETAILS = {
+      crop: {
+        title: "Aspect Ratio Crop",
+        desc: "Interactive visual cropping interface. Translates bounding rectangle dimensions natively into percentage-based FFmpeg filters, ensuring 1:1, 9:16, or 16:9 crops stay pin-sharp regardless of the source video resolution.",
+        in: "Image / Extracted Frame",
+        out: "Transloadit SSL URL + DataURL",
+        code: "// Filter: FFmpeg Dynamic Dimension Evaluation\ncrop=iw*width/100 : ih*height/100 : iw*x/100 : ih*y/100\n\n✓ Zero resolution distortion\n✓ Automatic input width/height detection"
+      },
+      extract: {
+        title: "Video Frame Extraction",
+        desc: "Precision stream seeking via FFmpeg worker tasks. Pinpoint any keyframe down to the exact millisecond or scrub dynamically without buffering heavy video files.",
+        in: "Direct Video URL (MP4 / WebM)",
+        out: "Uncompressed JPEG Frame Buffer",
+        code: "// FFmpeg Sub-second Seek Stream\nffmpeg -ss 00:03.20 -i input.mp4 -frames:v 1 -q:v 2 frame.jpg\n\n✓ Hardware accelerated seek\n✓ Keyframe boundary alignment"
+      },
+      llm: {
+        title: "Gemini 2.5 Multimodal",
+        desc: "Feeds dynamic multi-image reference parts alongside system prompts directly into Google Gemini models for visual copywriting, asset classification, and video analysis.",
+        in: "Prompt String + Reference Images Array",
+        out: "Structured Markdown / Ad Copy Variants",
+        code: "// Multimodal Parts Formulation\nai.models.generateContent({\n  model: 'gemini-2.5-flash',\n  contents: [prompt, imagePart1, imagePart2]\n});"
+      },
+      prompt: {
+        title: "Prompt Instruction Node",
+        desc: "Editable textarea component that automatically publishes downstream text values on change and maintains persistent state across browser reloads.",
+        in: "User Typed Markdown / Direct Input",
+        out: "Text Output Socket (String)",
+        code: "// Published to Flow Store in-memory\nsetOutput(nodeId, { text: promptContent });\n\n✓ Debounced local persistence\n✓ Instant edge wire propagation"
+      },
+      merge: {
+        title: "Smart Non-Destructive Merge",
+        desc: "Import external JSON workflows directly into non-empty canvases. Colliding node IDs and edge handle references are remapped automatically with zero canvas destruction.",
+        in: "Workflow JSON File (Nodes & Edges)",
+        out: "Offset Selected Node Cluster",
+        code: "// Automatic ID Collision Remapping\nif (existingNodeIds.has(node.id)) {\n  idMap.set(node.id, genUniqueId(node.type));\n}\n\n✓ Automatic horizontal layout offset\n✓ New nodes selected by default"
+      },
+      caching: {
+        title: "Upstream Node Caching",
+        desc: "Workflows inspect connected upstream edges. If previous computation outputs already exist and upstream nodes have not re-executed, expensive FFmpeg jobs are safely skipped.",
+        in: "Execution Tier Dependency Matrix",
+        out: "Cached Runtime Output Reference",
+        code: "// Dependency Freshness Check\nconst hasFreshUpstream = edges.some(\n  e => e.target === node.id && newlyExecuted.has(e.source)\n);\nif (!hasFreshUpstream && existingOutput) return existingOutput;"
+      }
+    };
+
+    function selectToolChip(el, key) {
+      document.querySelectorAll('.tool-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+
+      const data = TOOL_DETAILS[key] || TOOL_DETAILS.crop;
+      document.getElementById('toolTitle').textContent = data.title;
+      document.getElementById('toolDesc').textContent = data.desc;
+      document.getElementById('toolIn').textContent = data.in;
+      document.getElementById('toolOut').textContent = data.out;
+      document.getElementById('toolMedia').innerHTML = `
+        <div style="font-family: var(--font-mono); font-size: 13px; text-align: left; width: 100%; color: #9da0b5; line-height: 1.8; white-space: pre-wrap;">${data.code}</div>
+      `;
+    }
+
+    // -------------------------------------------------------------
+    // LIVE PIPELINE SIMULATION (With typewriter & wire highlights)
+    // -------------------------------------------------------------
+    let simBusy = false;
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function triggerLiveSimulation() {
+      if (simBusy) return;
+      simBusy = true;
+
+      const runBtn = document.getElementById('runSimAction');
+      const runLabel = document.getElementById('runSimLabel');
+      const statusPill = document.getElementById('stageStatusPill');
+
+      const n1 = document.getElementById('node1');
+      const n2 = document.getElementById('node2');
+      const n3 = document.getElementById('node3');
+      const n4 = document.getElementById('node4');
+      const n5 = document.getElementById('node5');
+
+      const p12 = document.getElementById('path_node1_node2');
+      const p23 = document.getElementById('path_node2_node3');
+      const p35 = document.getElementById('path_node3_node5');
+      const p45 = document.getElementById('path_node4_node5');
+
+      const n2Label = document.getElementById('node2Label');
+      const n3Label = document.getElementById('node3Label');
+      const n5Text = document.getElementById('node5Text');
+
+      runLabel.textContent = "Running Simulation...";
+      statusPill.textContent = "● Tier 1: Video Ingestion";
+      statusPill.style.color = "#38bdf8";
+
+      // Step 1: Video Node
+      n1.classList.add('node-running');
+      p12.classList.add('active');
+      await sleep(800);
+
+      // Step 2: Extract Frame
+      n1.classList.remove('node-running');
+      n2.classList.add('node-running');
+      n2Label.textContent = "Seeking frame 00:03.20...";
+      await sleep(900);
+      n2Label.innerHTML = '<span style="color:#4ade80; font-weight:600;">✓ Frame #96 Saved</span>';
+      p23.classList.add('active');
+
+      // Step 3: Crop Image
+      n2.classList.remove('node-running');
+      n3.classList.add('node-running');
+      n3Label.textContent = "Cropping 1:1...";
+      await sleep(900);
+      n3Label.innerHTML = '<span style="color:#4ade80; font-weight:600;">✓ 1080x1080 Square</span>';
+      p35.classList.add('active');
+
+      // Step 4: Prompt
+      statusPill.textContent = "● Tier 2: Multimodal Gemini AI";
+      n4.classList.add('node-running');
+      p45.classList.add('active');
+      await sleep(700);
+
+      n3.classList.remove('node-running');
+      n4.classList.remove('node-running');
+
+      // Step 5: Gemini LLM Output
+      n5.classList.add('node-running');
+      n5Text.style.color = "var(--accent)";
+      n5Text.textContent = "Synthesizing visual reasoning & copy...";
+      await sleep(1200);
+
+      const responseString = 
+        "✦ Ad Variant 1:\n" +
+        "\"Engineered with matte obsidian casing and 40-hr battery life. Upgrade your everyday audio.\"\n\n" +
+        "✦ Ad Variant 2 (Shorts Hook):\n" +
+        "\"The sound profile audiophiles are secretly switching to. 100% loss-free playback.\"";
+
+      n5Text.style.color = "#4ade80";
+      n5Text.textContent = "";
+
+      for (let i = 0; i < responseString.length; i++) {
+        n5Text.textContent += responseString[i];
+        if (i % 3 === 0) await sleep(12);
+      }
+
+      n5.classList.remove('node-running');
+      statusPill.textContent = "✓ Completed in 4.5s";
+      statusPill.style.color = "#4ade80";
+      runLabel.textContent = "Re-Run Simulation";
+      simBusy = false;
+    }
+
+    // Initialize layout
+    window.addEventListener('load', () => {
+      updateWires();
+      setupDraggables();
+    });
+
+    window.addEventListener('resize', updateWires);
+  </script>
+</body>
+</html>

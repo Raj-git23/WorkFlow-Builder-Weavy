@@ -118,8 +118,12 @@ class AppErrorHandler {
       return "Database configuration error: DATABASE_URL is missing from environment variables.";
     }
 
-    if (raw.includes("Can't reach database server") || raw.includes("P1001")) {
-      return "Unable to connect to the database. Please verify your PostgreSQL connection.";
+    if (
+      raw.includes("Can't reach database server") ||
+      raw.includes("P1001") ||
+      raw.includes("Timed out fetching a new connection from the connection pool")
+    ) {
+      return "Database server is unreachable or waking up from sleep. Please wait a moment and try again.";
     }
 
     if (raw.includes("P2002") || raw.includes("Unique constraint")) {

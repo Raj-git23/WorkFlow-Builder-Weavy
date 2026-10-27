@@ -5,13 +5,28 @@ const globalForPrisma = globalThis as unknown as {
   hasLoggedDbStatus: boolean | undefined;
 };
 
+function getSafeDatabaseUrl(): string | undefined {
+  let url = process.env.DATABASE_URL;
+  if (!url) return undefined;
+
+  // Supabase pooler on free tier has strict connection limits (15 max).
+  // Next.js Turbopack dev mode spawns multiple workers, quickly exhausting the pool without connection_limit.
+  if (url.includes("pooler.supabase.com") && !url.includes("connection_limit")) {
+    const separator = url.includes("?") ? "&" : "?";
+    url = `${url}${separator}connection_limit=5&pool_timeout=20`;
+  }
+  return url;
+}
+
+const safeDbUrl = getSafeDatabaseUrl();
+
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    datasources: process.env.DATABASE_URL
+    datasources: safeDbUrl
       ? {
           db: {
-            url: process.env.DATABASE_URL,
+            url: safeDbUrl,
           },
         }
       : undefined,
