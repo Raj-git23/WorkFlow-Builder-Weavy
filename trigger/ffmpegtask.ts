@@ -116,7 +116,6 @@ import { Transloadit } from "transloadit";
 
 // Uploads processed media to Transloadit (and persists local copy)
 async function uploadToTransloadit(filePath: string): Promise<{ url: string; dataUrl: string }> {
-  const dataUrl = await readAsBase64(filePath);
   const ext = path.extname(filePath).slice(1) || "jpg";
   const fileName = `processed-${Date.now()}.${ext}`;
 
@@ -168,8 +167,20 @@ async function uploadToTransloadit(filePath: string): Promise<{ url: string; dat
     }
   }
 
+  const finalUrl = transloaditUrl || localUrl;
+
+  // Only allocate full base64 string if remote CDN URL is unavailable
+  let dataUrl = finalUrl;
+  if (!transloaditUrl) {
+    try {
+      dataUrl = await readAsBase64(filePath);
+    } catch (e) {
+      console.warn("Base64 fallback skipped:", e);
+    }
+  }
+
   return {
-    url: transloaditUrl || localUrl,
+    url: finalUrl,
     dataUrl,
   };
 }
@@ -177,6 +188,7 @@ async function uploadToTransloadit(filePath: string): Promise<{ url: string; dat
 // Crop Image Task (FFmpeg filter evaluates input dimensions natively via iw & ih)
 export const cropImageTask = task({
   id: "crop-image",
+  machine: "small-2x", // 1 vCPU, 1 GB RAM
   maxDuration: 120,
   concurrency: { total: 2 },
   run: async (payload: {
@@ -191,24 +203,28 @@ export const cropImageTask = task({
     const input = await downloadToTmp(imageUrl, ext);
     const output = path.join(os.tmpdir(), `tl-cropped-${Date.now()}.${ext}`);
 
-    // FFmpeg crop filter natively computes input width (iw) and height (ih)
-    const cropFilter = `crop=iw*${width}/100:ih*${height}/100:iw*${x}/100:ih*${y}/100`;
+    try {
+      // FFmpeg crop filter natively computes input width (iw) and height (ih)
+      const cropFilter = `crop=iw*${width}/100:ih*${height}/100:iw*${x}/100:ih*${y}/100`;
 
-    await runFfmpeg(
-      Ffmpeg(input)
-        .videoFilters(cropFilter)
-        .output(output)
-    );
+      await runFfmpeg(
+        Ffmpeg(input)
+          .videoFilters(cropFilter)
+          .output(output)
+      );
 
-    const { url, dataUrl } = await uploadToTransloadit(output);
-    await cleanup(input, output);
-    return { dataUrl, url };
+      const { url, dataUrl } = await uploadToTransloadit(output);
+      return { dataUrl, url };
+    } finally {
+      await cleanup(input, output);
+    }
   },
 });
 
 // Extract Frame Task
 export const extractFrameTask = task({
   id: "extract-frame",
+  machine: "medium-1x", // 1 vCPU, 2 GB RAM (ensures smooth video decoding without OOM)
   maxDuration: 120,
   concurrency: { total: 2 },
   run: async (payload: {
@@ -220,18 +236,21 @@ export const extractFrameTask = task({
     const input = await downloadToTmp(videoUrl, "mp4");
     const output = path.join(os.tmpdir(), `tl-frame-${Date.now()}.jpg`);
 
-    const seekTime = timestamp || 0;
+    try {
+      const seekTime = timestamp || 0;
 
-    await runFfmpeg(
-      Ffmpeg(input)
-        .seekInput(seekTime)
-        .frames(1)
-        .output(output)
-        .outputOptions(["-q:v 2"])
-    );
+      await runFfmpeg(
+        Ffmpeg(input)
+          .seekInput(seekTime)
+          .frames(1)
+          .output(output)
+          .outputOptions(["-q:v 2"])
+      );
 
-    const { url, dataUrl } = await uploadToTransloadit(output);
-    await cleanup(input, output);
-    return { dataUrl, url };
+      const { url, dataUrl } = await uploadToTransloadit(output);
+      return { dataUrl, url };
+    } finally {
+      await cleanup(input, output);
+    }
   },
 });
