@@ -128,6 +128,7 @@ async function prepareImagePart(
 // Google Gemini Multimodal LLM Trigger.dev Task
 export const geminiTask = task({
   id: "run-gemini",
+  machine: "small-1x",
   maxDuration: 120,
   concurrency: { total: 3 },
   run: async (payload: {

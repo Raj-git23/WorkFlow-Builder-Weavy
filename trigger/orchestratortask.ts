@@ -25,6 +25,7 @@ export interface OrchestratePayload {
 
 export const orchestrateWorkflowTask = task({
   id: "orchestrate-workflow",
+  machine: "small-2x", // 1 vCPU, 1 GB RAM for orchestrator state + Prisma
   maxDuration: 600, // 10 minutes maximum total workflow duration
   // Modern Trigger.dev concurrency limit
   concurrency: { total: 2 },
@@ -160,7 +161,6 @@ export const orchestrateWorkflowTask = task({
                 if (!hasFreshUpstream && existingCrop) {
                   nodeResult = {
                     imageUrl: String(existingCrop),
-                    dataUrl: String(existingCrop),
                   };
                 } else {
                   const handle = await tasks.trigger<typeof cropImageTask>(
@@ -176,8 +176,7 @@ export const orchestrateWorkflowTask = task({
                     throw new Error(errorHandler.format(taskErr));
                   }
                   nodeResult = {
-                    imageUrl: res.output.url,
-                    dataUrl: res.output.dataUrl,
+                    imageUrl: res.output.url || res.output.dataUrl,
                   };
                   newlyExecutedNodeIds.add(node.id);
                 }
@@ -191,7 +190,6 @@ export const orchestrateWorkflowTask = task({
                 if (!hasFreshUpstream && existingFrame) {
                   nodeResult = {
                     imageUrl: String(existingFrame),
-                    dataUrl: String(existingFrame),
                   };
                 } else {
                   const handle = await tasks.trigger<typeof extractFrameTask>(
@@ -207,8 +205,7 @@ export const orchestrateWorkflowTask = task({
                     throw new Error(errorHandler.format(taskErr));
                   }
                   nodeResult = {
-                    imageUrl: res.output.url,
-                    dataUrl: res.output.dataUrl,
+                    imageUrl: res.output.url || res.output.dataUrl,
                   };
                   newlyExecutedNodeIds.add(node.id);
                 }

@@ -25,6 +25,7 @@ import { defineConfig } from "@trigger.dev/sdk/v3";
 export default defineConfig({
   project:     "proj_vivotrncbiimyachkltc",
   maxDuration: 300,
+  machine:     "small-2x",
   build: {
     // No ffmpeg() extension needed — WASM ships its own binary
     external: ["ffmpeg-static", "fluent-ffmpeg"],
