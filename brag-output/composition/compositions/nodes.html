@@ -1,0 +1,515 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/PlusJakartaSans-var.woff2") format("woff2");
+      font-weight: 200 900;
+    }
+    @font-face {
+      font-family: "DM Sans";
+      src: url("assets/fonts/DMSans-var.woff2") format("woff2");
+      font-weight: 100 1000;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "DM Sans", sans-serif;
+      color: #f2f0f8;
+    }
+    #nd-stage {
+      position: absolute;
+      inset: 0;
+    }
+    svg.i {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    /* Chrome, identical to the reveal's end state */
+    #nd-side {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 88px;
+      height: 1080px;
+      background: #212126;
+      border-right: 1.5px solid #302e33;
+    }
+    #nd-logo {
+      position: absolute;
+      left: 22px;
+      top: 30px;
+      width: 44px;
+      height: 44px;
+    }
+    .nd-ic {
+      position: absolute;
+      left: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nd-ic .hl {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: #f7ffa8;
+      opacity: 0;
+    }
+    .nd-ic svg {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      stroke-width: 1.1;
+    }
+    #nd-chev {
+      position: absolute;
+      left: 30px;
+      top: 1016px;
+      width: 28px;
+      height: 28px;
+      color: #9a9ab0;
+    }
+    #nd-name {
+      position: absolute;
+      left: 124px;
+      top: 30px;
+      height: 54px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      font-size: 21px;
+      font-weight: 500;
+    }
+    #nd-name .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #f7ffa8;
+    }
+    #nd-hist {
+      position: absolute;
+      left: 1572px;
+      top: 30px;
+      width: 54px;
+      height: 54px;
+      border-radius: 10px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      color: #f7ffa8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #nd-run {
+      position: absolute;
+      left: 1640px;
+      top: 30px;
+      width: 244px;
+      height: 54px;
+      border-radius: 10px;
+      background: #f7ffa8;
+      color: #1c1b1f;
+      font-size: 21px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    #nd-ctrl {
+      position: absolute;
+      left: 807px;
+      top: 966px;
+      height: 76px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    #nd-ctrl .b {
+      width: 52px;
+      height: 52px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #nd-ctrl .b.on {
+      background: #f7ffa8;
+      color: #1c1b1f;
+    }
+    #nd-ctrl .sep {
+      width: 1.5px;
+      height: 30px;
+      background: #302e33;
+      margin: 0 6px;
+    }
+    #nd-ctrl .zoom {
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #nd-mini {
+      position: absolute;
+      left: 1624px;
+      top: 872px;
+      width: 260px;
+      height: 170px;
+      background: #17161a;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+    }
+    #nd-mini .view {
+      position: absolute;
+      left: 40px;
+      top: 30px;
+      width: 170px;
+      height: 106px;
+      border: 1.5px solid rgba(247, 255, 168, 0.55);
+      border-radius: 4px;
+    }
+    #nd-mini .m {
+      position: absolute;
+      width: 46px;
+      height: 28px;
+      border-radius: 3px;
+      background: #3a3942;
+    }
+    /* Header */
+    #nd-head {
+      position: absolute;
+      left: 88px;
+      top: 100px;
+      width: 1832px;
+      text-align: center;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 800;
+      font-size: 64px;
+      letter-spacing: -0.04em;
+    }
+    #nd-head .w {
+      display: inline-block;
+      margin: 0 0.11em;
+    }
+    #nd-head .acc {
+      color: #f7ffa8;
+    }
+    /* Node cards (NodeShell, scaled for video) */
+    .card {
+      position: absolute;
+      width: 480px;
+      height: 290px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 12px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+    }
+    .card .sel {
+      position: absolute;
+      inset: -2px;
+      border-radius: 13px;
+      border: 2px solid #f7ffa8;
+      box-shadow: 0 0 30px rgba(247, 255, 168, 0.35);
+      opacity: 0;
+    }
+    .ct {
+      position: absolute;
+      left: 20px;
+      top: 18px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 23px;
+      font-weight: 600;
+    }
+    .ct svg {
+      width: 22px;
+      height: 22px;
+      color: #f7ffa8;
+    }
+    .tag {
+      margin-left: auto;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      color: #b4b3c0;
+      border: 1px solid #3a3940;
+      border-radius: 6px;
+      padding: 3px 8px;
+    }
+    .bd {
+      position: absolute;
+      left: 20px;
+      top: 64px;
+      width: 440px;
+      height: 162px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .bd img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 440px;
+      height: 162px;
+      object-fit: cover;
+    }
+    .ft {
+      position: absolute;
+      left: 20px;
+      top: 242px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      color: #b4b3c0;
+    }
+    .hd {
+      position: absolute;
+      top: 137px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+    }
+    .hd.o {
+      right: -9px;
+    }
+    .hd.n {
+      left: -9px;
+    }
+    .ta {
+      background: #1c1b1f;
+      border: 1.5px solid #302e33;
+      padding: 14px 16px;
+      font-size: 19px;
+      line-height: 1.45;
+      color: #e4e2ec;
+    }
+    #nd-vid {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 440px;
+      height: 162px;
+      object-fit: cover;
+    }
+    .bar {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 14px;
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .bar .ph {
+      position: absolute;
+      left: 50%;
+      top: -6px;
+      width: 4px;
+      height: 17px;
+      margin-left: -2px;
+      border-radius: 2px;
+      background: #f7ffa8;
+    }
+    .bar .fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 5px;
+      width: 50%;
+      border-radius: 3px;
+      background: #f7ffa8;
+    }
+    .crop {
+      position: absolute;
+      left: 10%;
+      top: 10%;
+      width: 80%;
+      height: 80%;
+      border: 2px solid #f7ffa8;
+      box-shadow: 0 0 0 600px rgba(0, 0, 0, 0.6);
+      background-image: linear-gradient(to right, rgba(247, 255, 168, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(247, 255, 168, 0.4) 1px, transparent 1px);
+      background-size: 33.333% 33.333%;
+    }
+    .llm .sl {
+      height: 46px;
+      background: #1c1b1f;
+      border: 1.5px solid #302e33;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      font-size: 19px;
+    }
+    .llm .sl svg {
+      margin-left: auto;
+      width: 18px;
+      height: 18px;
+      color: #9a9ab0;
+    }
+    .llm .ins {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      color: #d0cedb;
+    }
+    .llm .ins span {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #17161a;
+      border: 1px solid #302e33;
+      border-radius: 6px;
+      padding: 6px 9px;
+    }
+    .llm .ins i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .llm .rb {
+      margin-top: 14px;
+      height: 48px;
+      border-radius: 8px;
+      background: #f7ffa8;
+      color: #1c1b1f;
+      font-size: 19px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+  </style>
+  <div data-hf-id="hf-p3n8" id="root" data-composition-id="nodes" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-d4ea" id="nd-stage">
+      <aside data-hf-id="hf-s4ea" id="nd-side">
+        <svg data-hf-id="hf-0qb6" id="nd-logo" class="i" viewBox="0 0 24 24" stroke-width="1.4"><path data-hf-id="hf-tn8x" d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></svg>
+        <div data-hf-id="hf-uji6" class="nd-ic" id="nd-i1" style="top: 140px"><div data-hf-id="hf-92b8" class="hl"></div><svg data-hf-id="hf-xr3z" class="i" viewBox="0 0 24 24"><polyline data-hf-id="hf-9yrg" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-t8ad" x1="9" x2="15" y1="20" y2="20" /><line data-hf-id="hf-g3i4" x1="12" x2="12" y1="4" y2="20" /></svg></div>
+        <div data-hf-id="hf-td3t" class="nd-ic" id="nd-i2" style="top: 216px"><div data-hf-id="hf-6gwc" class="hl"></div><svg data-hf-id="hf-57y7" class="i" viewBox="0 0 24 24"><path data-hf-id="hf-wyzk" d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" /><path data-hf-id="hf-m7q2" d="m14 19.5 3-3 3 3" /><path data-hf-id="hf-mqw4" d="M17 22v-5.5" /><circle data-hf-id="hf-ymtw" cx="9" cy="9" r="2" /></svg></div>
+        <div data-hf-id="hf-5w2q" class="nd-ic" id="nd-i3" style="top: 292px"><div data-hf-id="hf-59z9" class="hl"></div><svg data-hf-id="hf-4tn6" class="i" viewBox="0 0 24 24"><rect data-hf-id="hf-m05h" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-zgky" d="M10 8.5l5 3.5-5 3.5z" /></svg></div>
+        <div data-hf-id="hf-87zl" class="nd-ic" id="nd-i4" style="top: 368px"><div data-hf-id="hf-5oaa" class="hl"></div><svg data-hf-id="hf-4fc5" class="i" viewBox="0 0 24 24"><path data-hf-id="hf-hhq3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /><path data-hf-id="hf-r3z8" d="M20 3v4" /><path data-hf-id="hf-6c9h" d="M22 5h-4" /><path data-hf-id="hf-viov" d="M4 17v2" /><path data-hf-id="hf-bkmk" d="M5 18H3" /></svg></div>
+        <div data-hf-id="hf-bytn" class="nd-ic" id="nd-i5" style="top: 444px"><div data-hf-id="hf-bpsj" class="hl"></div><svg data-hf-id="hf-77hc" class="i" viewBox="0 0 24 24"><path data-hf-id="hf-whvs" d="M6 2v14a2 2 0 0 0 2 2h14" /><path data-hf-id="hf-qr9z" d="M18 22V8a2 2 0 0 0-2-2H2" /></svg></div>
+        <div data-hf-id="hf-hwkt" class="nd-ic" id="nd-i6" style="top: 520px"><div data-hf-id="hf-c43k" class="hl"></div><svg data-hf-id="hf-6t6b" class="i" viewBox="0 0 24 24"><rect data-hf-id="hf-5fh5" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-zhce" d="M7 3v18" /><path data-hf-id="hf-yi7m" d="M3 7.5h4" /><path data-hf-id="hf-e5fq" d="M3 12h18" /><path data-hf-id="hf-t3d4" d="M3 16.5h4" /><path data-hf-id="hf-027x" d="M17 3v18" /><path data-hf-id="hf-zn3f" d="M17 7.5h4" /><path data-hf-id="hf-ryrb" d="M17 16.5h4" /></svg></div>
+        <svg data-hf-id="hf-bsvf" id="nd-chev" class="i" viewBox="0 0 24 24" stroke-width="1.6"><path data-hf-id="hf-n0rv" d="m15 18-6-6 6-6" /></svg>
+      </aside>
+      <div data-hf-id="hf-dgch" id="nd-name"><span data-hf-id="hf-9gry" class="dot"></span>Product Marketing Kit Generator</div>
+      <div data-hf-id="hf-xkf8" id="nd-hist"><svg data-hf-id="hf-6tk7" class="i" viewBox="0 0 24 24" width="28" height="28" stroke-width="1.8"><path data-hf-id="hf-i1c6" d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path data-hf-id="hf-jwj3" d="M3 3v5h5" /><path data-hf-id="hf-x08s" d="M12 7v5l4 2" /></svg></div>
+      <div data-hf-id="hf-rx5h" id="nd-run"><svg data-hf-id="hf-o2gu" class="i" viewBox="0 0 24 24" width="20" height="20" stroke-width="2.4" style="fill: #1c1b1f"><polygon data-hf-id="hf-iq02" points="6 3 20 12 6 21 6 3" /></svg>Run Workflow</div>
+      <div data-hf-id="hf-wktn" id="nd-ctrl">
+        <div data-hf-id="hf-z38x" class="b on"><svg data-hf-id="hf-rzwr" class="i" viewBox="0 0 24 24" width="28" height="28" stroke-width="1.4"><path data-hf-id="hf-xi1z" d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" /></svg></div>
+        <div data-hf-id="hf-goiq" class="b"><svg data-hf-id="hf-qdbf" class="i" viewBox="0 0 24 24" width="28" height="28" stroke-width="1.4"><path data-hf-id="hf-3gix" d="M18 11V6a2 2 0 0 0-4 0v5" /><path data-hf-id="hf-zcx1" d="M14 10V4a2 2 0 0 0-4 0v6" /><path data-hf-id="hf-5y46" d="M10 10.5V6a2 2 0 0 0-4 0v8" /><path data-hf-id="hf-2zwj" d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg></div>
+        <div data-hf-id="hf-kpqk" class="sep"></div>
+        <div data-hf-id="hf-ys5i" class="b"><svg data-hf-id="hf-2x1o" class="i" viewBox="0 0 24 24" width="26" height="26" stroke-width="2"><path data-hf-id="hf-u8ox" d="M9 14 4 9l5-5" /><path data-hf-id="hf-xlq3" d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" /></svg></div>
+        <div data-hf-id="hf-z6gj" class="b"><svg data-hf-id="hf-t144" class="i" viewBox="0 0 24 24" width="26" height="26" stroke-width="2"><path data-hf-id="hf-dtsv" d="m15 14 5-5-5-5" /><path data-hf-id="hf-qpsw" d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13" /></svg></div>
+        <div data-hf-id="hf-d2ec" class="sep"></div>
+        <div data-hf-id="hf-vulj" class="zoom">100%<svg data-hf-id="hf-okto" class="i" viewBox="0 0 24 24" width="20" height="20" stroke-width="2"><path data-hf-id="hf-zit5" d="m6 9 6 6 6-6" /></svg></div>
+      </div>
+      <div data-hf-id="hf-p6gl" id="nd-mini">
+        <div data-hf-id="hf-z18r" class="view"></div>
+        <div data-hf-id="hf-i380" class="m" id="nd-m1" style="left: 56px; top: 44px"></div>
+        <div data-hf-id="hf-ewpe" class="m" id="nd-m2" style="left: 107px; top: 44px"></div>
+        <div data-hf-id="hf-qnw5" class="m" id="nd-m3" style="left: 158px; top: 44px"></div>
+        <div data-hf-id="hf-ut9j" class="m" id="nd-m4" style="left: 56px; top: 82px"></div>
+        <div data-hf-id="hf-9r9x" class="m" id="nd-m5" style="left: 107px; top: 82px"></div>
+        <div data-hf-id="hf-nvrs" class="m" id="nd-m6" style="left: 158px; top: 82px"></div>
+      </div>
+
+      <h2 data-hf-id="hf-6tnl" id="nd-head"><span data-hf-id="hf-e2s0" class="w">Six</span><span data-hf-id="hf-d3b5" class="w">nodes.</span><span data-hf-id="hf-wxsh" class="w acc">One</span><span data-hf-id="hf-zw3n" class="w acc">canvas.</span></h2>
+
+      <!-- 1. Text -->
+      <div data-hf-id="hf-nhz3" class="card" id="nd-c1" style="left: 248px; top: 210px">
+        <div data-hf-id="hf-qyxs" class="sel"></div>
+        <div data-hf-id="hf-o1u3" class="ct"><svg data-hf-id="hf-6ww3" class="i" viewBox="0 0 24 24" stroke-width="2"><polyline data-hf-id="hf-pdx0" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-75nt" x1="9" x2="15" y1="20" y2="20" /><line data-hf-id="hf-w5ys" x1="12" x2="12" y1="4" y2="20" /></svg>Prompt<span data-hf-id="hf-4mtk" class="tag">TEXT</span></div>
+        <div data-hf-id="hf-l2gn" class="bd ta">Product: Wireless Bluetooth Headphones. Features: Noise cancellation, 30-hour battery, foldable design.</div>
+        <div data-hf-id="hf-jxe2" class="ft">textarea → text output</div>
+        <div data-hf-id="hf-x61h" class="hd o" style="background: #f1a0fa"></div>
+      </div>
+      <!-- 2. Upload Image -->
+      <div data-hf-id="hf-67dn" class="card" id="nd-c2" style="left: 764px; top: 210px">
+        <div data-hf-id="hf-ir14" class="sel"></div>
+        <div data-hf-id="hf-db4h" class="ct"><svg data-hf-id="hf-iiyr" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-c4rc" d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" /><path data-hf-id="hf-f266" d="m14 19.5 3-3 3 3" /><path data-hf-id="hf-svvg" d="M17 22v-5.5" /><circle data-hf-id="hf-xbfw" cx="9" cy="9" r="2" /></svg>Upload Image<span data-hf-id="hf-2c1w" class="tag">IMAGE</span></div>
+        <div data-hf-id="hf-sd36" class="bd"><img data-hf-id="hf-0bhi" src="assets/img/headphones.jpg" alt="" /></div>
+        <div data-hf-id="hf-kn4t" class="ft">jpg · png · webp · gif · Transloadit</div>
+        <div data-hf-id="hf-mrht" class="hd o" style="background: #45a08a"></div>
+      </div>
+      <!-- 3. Upload Video -->
+      <div data-hf-id="hf-ggcu" class="card" id="nd-c3" style="left: 1280px; top: 210px">
+        <div data-hf-id="hf-hk41" class="sel"></div>
+        <div data-hf-id="hf-d6zj" class="ct"><svg data-hf-id="hf-i4nq" class="i" viewBox="0 0 24 24" stroke-width="2"><rect data-hf-id="hf-6me8" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-xs3a" d="M10 8.5l5 3.5-5 3.5z" /></svg>Upload Video<span data-hf-id="hf-xmyq" class="tag">VIDEO</span></div>
+        <div data-hf-id="hf-qsva" class="bd">
+          <video data-hf-id="hf-z24s" id="nd-vid" class="clip" data-start="0" data-duration="9.81" muted playsinline src="assets/video/raft.mp4"></video>
+          <div data-hf-id="hf-ufsv" class="bar"><div data-hf-id="hf-65b5" class="fill" style="width: 34%"></div></div>
+        </div>
+        <div data-hf-id="hf-8kz2" class="ft">mp4 · mov · webm · m4v · Transloadit</div>
+        <div data-hf-id="hf-xw87" class="hd o" style="background: #ea8362"></div>
+      </div>
+      <!-- 4. LLM -->
+      <div data-hf-id="hf-g21p" class="card" id="nd-c4" style="left: 248px; top: 536px">
+        <div data-hf-id="hf-hyf2" class="sel"></div>
+        <div data-hf-id="hf-qlsi" class="ct"><svg data-hf-id="hf-hqcp" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-7jy3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /></svg>Google Gemini LLM<span data-hf-id="hf-jgt2" class="tag">LLM</span></div>
+        <div data-hf-id="hf-z7dr" class="bd llm">
+          <div data-hf-id="hf-002g" class="sl">Gemini 3.5 Flash<svg data-hf-id="hf-hc1o" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-tdtv" d="m7 15 5 5 5-5" /><path data-hf-id="hf-0o9g" d="m7 9 5-5 5 5" /></svg></div>
+          <div data-hf-id="hf-yzwk" class="ins"><span data-hf-id="hf-zhsw"><i data-hf-id="hf-3wmx" style="background: #f1a0fa"></i>System</span><span data-hf-id="hf-ne3w"><i data-hf-id="hf-ktsd" style="background: #f1a0fa"></i>User*</span><span data-hf-id="hf-z7zz"><i data-hf-id="hf-apet" style="background: #45a08a"></i>Images</span></div>
+          <div data-hf-id="hf-9pbs" class="rb"><svg data-hf-id="hf-qv96" class="i" viewBox="0 0 24 24" width="16" height="16" stroke-width="2.4" style="fill: #1c1b1f"><polygon data-hf-id="hf-vl6u" points="6 3 20 12 6 21 6 3" /></svg>Run Model</div>
+        </div>
+        <div data-hf-id="hf-6nm7" class="ft">Trigger.dev task · vision</div>
+        <div data-hf-id="hf-xv7s" class="hd n" style="background: #f1a0fa"></div>
+        <div data-hf-id="hf-l821" class="hd o" style="background: #f1a0fa"></div>
+      </div>
+      <!-- 5. Crop -->
+      <div data-hf-id="hf-wdk7" class="card" id="nd-c5" style="left: 764px; top: 536px">
+        <div data-hf-id="hf-grhz" class="sel"></div>
+        <div data-hf-id="hf-dnmv" class="ct"><svg data-hf-id="hf-gxqn" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-y0ow" d="M6 2v14a2 2 0 0 0 2 2h14" /><path data-hf-id="hf-um53" d="M18 22V8a2 2 0 0 0-2-2H2" /></svg>Crop<span data-hf-id="hf-807i" class="tag">FFMPEG</span></div>
+        <div data-hf-id="hf-r76b" class="bd"><img data-hf-id="hf-jvl6" src="assets/img/headphones.jpg" alt="" /><div data-hf-id="hf-fq16" class="crop"></div></div>
+        <div data-hf-id="hf-7r86" class="ft">x 10 · y 10 · w 80 · h 80 %</div>
+        <div data-hf-id="hf-lx38" class="hd n" style="background: #45a08a"></div>
+        <div data-hf-id="hf-n1r9" class="hd o" style="background: #45a08a"></div>
+      </div>
+      <!-- 6. Extract Frame -->
+      <div data-hf-id="hf-lfom" class="card" id="nd-c6" style="left: 1280px; top: 536px">
+        <div data-hf-id="hf-h5t0" class="sel"></div>
+        <div data-hf-id="hf-n320" class="ct"><svg data-hf-id="hf-gjfm" class="i" viewBox="0 0 24 24" stroke-width="2"><rect data-hf-id="hf-6837" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-at1u" d="M7 3v18" /><path data-hf-id="hf-h3li" d="M3 7.5h4" /><path data-hf-id="hf-41e2" d="M3 12h18" /><path data-hf-id="hf-4erk" d="M3 16.5h4" /><path data-hf-id="hf-8j81" d="M17 3v18" /><path data-hf-id="hf-odjf" d="M17 7.5h4" /><path data-hf-id="hf-q5dj" d="M17 16.5h4" /></svg>Extract Video Frame<span data-hf-id="hf-bdhu" class="tag">FFMPEG</span></div>
+        <div data-hf-id="hf-rlhc" class="bd"><img data-hf-id="hf-3yt7" src="assets/img/frame50.jpg" alt="" /><div data-hf-id="hf-c51b" class="bar"><div data-hf-id="hf-4qej" class="fill"></div><div data-hf-id="hf-i8mw" class="ph"></div></div></div>
+        <div data-hf-id="hf-wryk" class="ft">timestamp 50% · seconds or %</div>
+        <div data-hf-id="hf-n0w6" class="hd n" style="background: #ea8362"></div>
+        <div data-hf-id="hf-o8oc" class="hd o" style="background: #45a08a"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#nd-head .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.08 }, 0.2);
+    // beat-grid: one card every other beat (10.38 11.47 12.56 13.64 14.73 15.82 abs) — each fires out of its sidebar icon.
+    const fly = [[-444, -187], [-960, -111], [-1476, -35], [-444, -285], [-960, -209], [-1476, -133]];
+    [0.55, 1.64, 2.73, 3.81, 4.9, 5.99].forEach((t, i) => {
+      const n = i + 1;
+      tl.fromTo("#nd-i" + n + " .hl", { opacity: 0.9 }, { opacity: 0, duration: 0.45, ease: "power2.out", immediateRender: false }, t - 0.05);
+      tl.fromTo("#nd-c" + n, { x: fly[i][0], y: fly[i][1], scale: 0.1, opacity: 0, filter: "blur(10px)" }, { x: 0, y: 0, scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, t);
+      tl.fromTo("#nd-c" + n + " .sel", { opacity: 1 }, { opacity: 0, duration: 0.8, ease: "power2.out", immediateRender: false }, t + 0.35);
+      tl.fromTo("#nd-m" + n, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.35, ease: "expo.out" }, t + 0.2);
+    });
+    // Whip into the drop: the whole canvas smears left.
+    tl.to("#nd-stage", { x: -520, opacity: 0, filter: "blur(18px)", duration: 0.4, ease: "power3.in" }, 9.4);
+    window.__timelines["nodes"] = tl;
+  </script>
+</template>

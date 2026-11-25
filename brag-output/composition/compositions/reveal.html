@@ -1,0 +1,291 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/PlusJakartaSans-var.woff2") format("woff2");
+      font-weight: 200 900;
+    }
+    @font-face {
+      font-family: "DM Sans";
+      src: url("assets/fonts/DMSans-var.woff2") format("woff2");
+      font-weight: 100 1000;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "DM Sans", sans-serif;
+      color: #f2f0f8;
+    }
+    #rv-stage {
+      position: absolute;
+      inset: 0;
+    }
+    #rv-flash {
+      position: absolute;
+      inset: 0;
+      background: #f7ffa8;
+      opacity: 0;
+    }
+    svg.i {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    /* Left sidebar (LeftSidebar.tsx, scaled for video) */
+    #rv-side {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 88px;
+      height: 1080px;
+      background: #212126;
+      border-right: 1.5px solid #302e33;
+    }
+    #rv-logo {
+      position: absolute;
+      left: 22px;
+      top: 30px;
+      width: 44px;
+      height: 44px;
+      color: #f2f0f8;
+    }
+    .rv-ic {
+      position: absolute;
+      left: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      color: #f2f0f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .rv-ic .hl {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      background: #312f37;
+      box-shadow: 0 0 0 1.5px #f7ffa8;
+      opacity: 0;
+    }
+    .rv-ic svg {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      stroke-width: 1.1;
+    }
+    #rv-chev {
+      position: absolute;
+      left: 30px;
+      top: 1016px;
+      width: 28px;
+      height: 28px;
+      color: #9a9ab0;
+    }
+    /* Top bar */
+    #rv-name {
+      position: absolute;
+      left: 124px;
+      top: 30px;
+      height: 54px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      font-size: 21px;
+      font-weight: 500;
+    }
+    #rv-name .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #f7ffa8;
+    }
+    #rv-hist {
+      position: absolute;
+      left: 1572px;
+      top: 30px;
+      width: 54px;
+      height: 54px;
+      border-radius: 10px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      color: #f7ffa8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #rv-run {
+      position: absolute;
+      left: 1640px;
+      top: 30px;
+      width: 244px;
+      height: 54px;
+      border-radius: 10px;
+      background: #f7ffa8;
+      color: #1c1b1f;
+      font-size: 21px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    /* Bottom controls (BottomControls.tsx) */
+    #rv-ctrl {
+      position: absolute;
+      left: 807px;
+      top: 966px;
+      height: 76px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    #rv-ctrl .b {
+      width: 52px;
+      height: 52px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f2f0f8;
+    }
+    #rv-ctrl .b.on {
+      background: #f7ffa8;
+      color: #1c1b1f;
+    }
+    #rv-ctrl .sep {
+      width: 1.5px;
+      height: 30px;
+      background: #302e33;
+      margin: 0 6px;
+    }
+    #rv-ctrl .zoom {
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    /* MiniMap */
+    #rv-mini {
+      position: absolute;
+      left: 1624px;
+      top: 872px;
+      width: 260px;
+      height: 170px;
+      background: #17161a;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+    }
+    #rv-mini .view {
+      position: absolute;
+      left: 40px;
+      top: 30px;
+      width: 170px;
+      height: 106px;
+      border: 1.5px solid rgba(247, 255, 168, 0.55);
+      border-radius: 4px;
+    }
+    /* Caption */
+    #rv-cap {
+      position: absolute;
+      left: 88px;
+      top: 420px;
+      width: 1832px;
+      text-align: center;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 700;
+      font-size: 84px;
+      letter-spacing: -0.035em;
+      line-height: 1.05;
+    }
+    #rv-cap .w {
+      display: inline-block;
+      margin: 0 0.12em;
+    }
+    #rv-cap .acc {
+      color: #f7ffa8;
+    }
+    #rv-sub {
+      position: absolute;
+      left: 88px;
+      top: 548px;
+      width: 1832px;
+      text-align: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 27px;
+      color: #9a9ab0;
+      letter-spacing: 0.02em;
+    }
+  </style>
+  <div data-hf-id="hf-yqoq" id="root" data-composition-id="reveal" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-0m38" id="rv-stage">
+      <aside data-hf-id="hf-nims" id="rv-side">
+        <svg data-hf-id="hf-b8u0" id="rv-logo" class="i" viewBox="0 0 24 24" stroke-width="1.4"><path data-hf-id="hf-tn8x" d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></svg>
+        <div data-hf-id="hf-j80i" class="rv-ic" id="rv-i1" style="top: 140px"><div data-hf-id="hf-92b8" class="hl"></div><svg data-hf-id="hf-xr3z" class="i" viewBox="0 0 24 24"><polyline data-hf-id="hf-9yrg" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-t8ad" x1="9" x2="15" y1="20" y2="20" /><line data-hf-id="hf-g3i4" x1="12" x2="12" y1="4" y2="20" /></svg></div>
+        <div data-hf-id="hf-7nsd" class="rv-ic" id="rv-i2" style="top: 216px"><div data-hf-id="hf-6gwc" class="hl"></div><svg data-hf-id="hf-57y7" class="i" viewBox="0 0 24 24"><path data-hf-id="hf-wyzk" d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" /><path data-hf-id="hf-m7q2" d="m14 19.5 3-3 3 3" /><path data-hf-id="hf-mqw4" d="M17 22v-5.5" /><circle data-hf-id="hf-ymtw" cx="9" cy="9" r="2" /></svg></div>
+        <div data-hf-id="hf-4o26" class="rv-ic" id="rv-i3" style="top: 292px"><div data-hf-id="hf-59z9" class="hl"></div><svg data-hf-id="hf-4tn6" class="i" viewBox="0 0 24 24"><rect data-hf-id="hf-m05h" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-zgky" d="M10 8.5l5 3.5-5 3.5z" /></svg></div>
+        <div data-hf-id="hf-u9ot" class="rv-ic" id="rv-i4" style="top: 368px"><div data-hf-id="hf-5oaa" class="hl"></div><svg data-hf-id="hf-4fc5" class="i" viewBox="0 0 24 24"><path data-hf-id="hf-hhq3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /><path data-hf-id="hf-r3z8" d="M20 3v4" /><path data-hf-id="hf-6c9h" d="M22 5h-4" /><path data-hf-id="hf-viov" d="M4 17v2" /><path data-hf-id="hf-bkmk" d="M5 18H3" /></svg></div>
+        <div data-hf-id="hf-w7uv" class="rv-ic" id="rv-i5" style="top: 444px"><div data-hf-id="hf-bpsj" class="hl"></div><svg data-hf-id="hf-77hc" class="i" viewBox="0 0 24 24"><path data-hf-id="hf-whvs" d="M6 2v14a2 2 0 0 0 2 2h14" /><path data-hf-id="hf-qr9z" d="M18 22V8a2 2 0 0 0-2-2H2" /></svg></div>
+        <div data-hf-id="hf-3121" class="rv-ic" id="rv-i6" style="top: 520px"><div data-hf-id="hf-c43k" class="hl"></div><svg data-hf-id="hf-6t6b" class="i" viewBox="0 0 24 24"><rect data-hf-id="hf-5fh5" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-zhce" d="M7 3v18" /><path data-hf-id="hf-yi7m" d="M3 7.5h4" /><path data-hf-id="hf-e5fq" d="M3 12h18" /><path data-hf-id="hf-t3d4" d="M3 16.5h4" /><path data-hf-id="hf-027x" d="M17 3v18" /><path data-hf-id="hf-zn3f" d="M17 7.5h4" /><path data-hf-id="hf-ryrb" d="M17 16.5h4" /></svg></div>
+        <svg data-hf-id="hf-9ir5" id="rv-chev" class="i" viewBox="0 0 24 24" stroke-width="1.6"><path data-hf-id="hf-n0rv" d="m15 18-6-6 6-6" /></svg>
+      </aside>
+
+      <div data-hf-id="hf-nc2j" id="rv-name"><span data-hf-id="hf-9gry" class="dot"></span>Product Marketing Kit Generator</div>
+      <div data-hf-id="hf-asva" id="rv-hist"><svg data-hf-id="hf-6tk7" class="i" viewBox="0 0 24 24" width="28" height="28" stroke-width="1.8"><path data-hf-id="hf-i1c6" d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path data-hf-id="hf-jwj3" d="M3 3v5h5" /><path data-hf-id="hf-x08s" d="M12 7v5l4 2" /></svg></div>
+      <div data-hf-id="hf-lmz7" id="rv-run"><svg data-hf-id="hf-o2gu" class="i" viewBox="0 0 24 24" width="20" height="20" stroke-width="2.4" style="fill: #1c1b1f"><polygon data-hf-id="hf-iq02" points="6 3 20 12 6 21 6 3" /></svg>Run Workflow</div>
+
+      <div data-hf-id="hf-thk9" id="rv-ctrl">
+        <div data-hf-id="hf-z38x" class="b on"><svg data-hf-id="hf-rzwr" class="i" viewBox="0 0 24 24" width="28" height="28" stroke-width="1.4"><path data-hf-id="hf-xi1z" d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" /></svg></div>
+        <div data-hf-id="hf-goiq" class="b"><svg data-hf-id="hf-qdbf" class="i" viewBox="0 0 24 24" width="28" height="28" stroke-width="1.4"><path data-hf-id="hf-3gix" d="M18 11V6a2 2 0 0 0-4 0v5" /><path data-hf-id="hf-zcx1" d="M14 10V4a2 2 0 0 0-4 0v6" /><path data-hf-id="hf-5y46" d="M10 10.5V6a2 2 0 0 0-4 0v8" /><path data-hf-id="hf-2zwj" d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" /></svg></div>
+        <div data-hf-id="hf-kpqk" class="sep"></div>
+        <div data-hf-id="hf-ys5i" class="b"><svg data-hf-id="hf-2x1o" class="i" viewBox="0 0 24 24" width="26" height="26" stroke-width="2"><path data-hf-id="hf-u8ox" d="M9 14 4 9l5-5" /><path data-hf-id="hf-xlq3" d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" /></svg></div>
+        <div data-hf-id="hf-z6gj" class="b"><svg data-hf-id="hf-t144" class="i" viewBox="0 0 24 24" width="26" height="26" stroke-width="2"><path data-hf-id="hf-dtsv" d="m15 14 5-5-5-5" /><path data-hf-id="hf-qpsw" d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13" /></svg></div>
+        <div data-hf-id="hf-d2ec" class="sep"></div>
+        <div data-hf-id="hf-vulj" class="zoom">100%<svg data-hf-id="hf-okto" class="i" viewBox="0 0 24 24" width="20" height="20" stroke-width="2"><path data-hf-id="hf-zit5" d="m6 9 6 6 6-6" /></svg></div>
+      </div>
+
+      <div data-hf-id="hf-036v" id="rv-mini"><div data-hf-id="hf-z18r" class="view"></div></div>
+
+      <h2 data-hf-id="hf-smun" id="rv-cap"><span data-hf-id="hf-ufi3" class="w">A</span><span data-hf-id="hf-1bxy" class="w">node-based</span><span data-hf-id="hf-d5wa" class="w acc">LLM</span><span data-hf-id="hf-o5it" class="w">workflow</span><span data-hf-id="hf-lydf" class="w">builder.</span></h2>
+      <p data-hf-id="hf-8u3t" id="rv-sub">Next.js · React Flow · Gemini · Trigger.dev · Transloadit</p>
+    </div>
+    <div data-hf-id="hf-iakl" id="rv-flash" data-layout-ignore></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // Arrival through the hook's ring: comes in large and blurred, settles.
+    tl.fromTo("#rv-stage", { scale: 1.22, opacity: 0, filter: "blur(16px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 0);
+    tl.fromTo("#rv-flash", { opacity: 0.5 }, { opacity: 0, duration: 0.3, ease: "power2.out" }, 0);
+    tl.fromTo("#rv-side", { x: -90 }, { x: 0, duration: 0.55, ease: "expo.out" }, 0.12);
+    tl.fromTo("#rv-logo", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out" }, 0.35);
+    // beat-grid: six Quick Access icons on consecutive beats (5.74 6.28 6.82 7.35 7.79 8.22 abs).
+    [1.1, 1.64, 2.18, 2.71, 3.15, 3.58].forEach((t, i) => {
+      const id = "#rv-i" + (i + 1);
+      tl.fromTo(id + " svg", { opacity: 0, scale: 0.3, filter: "blur(8px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.35, ease: "expo.out" }, t);
+      tl.fromTo(id + " .hl", { opacity: 1 }, { opacity: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, t);
+    });
+    tl.fromTo("#rv-chev", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.6);
+    // Chrome arrives around the caption.
+    tl.fromTo(["#rv-name", "#rv-hist", "#rv-run"], { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "expo.out", stagger: 0.06 }, 1.0);
+    tl.fromTo("#rv-ctrl", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "expo.out" }, 1.2);
+    tl.fromTo("#rv-mini", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "expo.out" }, 1.32);
+    // Caption: per word blur-in, then the stack line.
+    tl.fromTo("#rv-cap .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.075 }, 0.75);
+    tl.fromTo("#rv-sub", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.45);
+    // Caption clears for the nodes; the chrome stays.
+    tl.to(["#rv-cap", "#rv-sub"], { opacity: 0, filter: "blur(10px)", duration: 0.22, ease: "power2.in" }, 4.75);
+    window.__timelines["reveal"] = tl;
+  </script>
+</template>

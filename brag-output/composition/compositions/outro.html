@@ -1,0 +1,189 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/PlusJakartaSans-var.woff2") format("woff2");
+      font-weight: 200 900;
+    }
+    @font-face {
+      font-family: "DM Sans";
+      src: url("assets/fonts/DMSans-var.woff2") format("woff2");
+      font-weight: 100 1000;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "DM Sans", sans-serif;
+      color: #f2f0f8;
+    }
+    svg.i {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .crow {
+      position: absolute;
+      left: 0;
+      width: 1920px;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+    .chip {
+      height: 80px;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 999px;
+      font-size: 31px;
+      font-weight: 500;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .chip svg {
+      width: 32px;
+      height: 32px;
+      color: #f7ffa8;
+    }
+    #ou-burst {
+      position: absolute;
+      left: 560px;
+      top: 70px;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(247, 255, 168, 0.75) 0%, rgba(247, 255, 168, 0.18) 30%, rgba(247, 255, 168, 0) 68%);
+      opacity: 0;
+    }
+    #ou-mark {
+      position: absolute;
+      left: 0;
+      top: 390px;
+      width: 1920px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 34px;
+    }
+    #ou-icon {
+      position: relative;
+      width: 118px;
+      height: 118px;
+      border-radius: 26px;
+      background: #f7ffa8;
+      box-shadow: 0 0 60px rgba(247, 255, 168, 0.4);
+    }
+    #ou-icon i {
+      position: absolute;
+      border-radius: 50%;
+      background: #1c1b1f;
+    }
+    #ou-icon b {
+      position: absolute;
+      left: 37px;
+      top: 44px;
+      width: 46px;
+      height: 32px;
+      border: 5px solid #1c1b1f;
+      border-left: none;
+      border-radius: 0 16px 16px 0;
+    }
+    #ou-word {
+      position: relative;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 800;
+      font-size: 132px;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .ou-ghost {
+      position: absolute;
+      left: 0;
+      top: 0;
+      mix-blend-mode: screen;
+      opacity: 0;
+    }
+    #ou-shine {
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: transparent;
+      background-image: linear-gradient(100deg, rgba(255, 255, 255, 0) 42%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 58%);
+      background-size: 300% 100%;
+      background-repeat: no-repeat;
+      background-position: 100% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    #ou-sub {
+      position: absolute;
+      left: 0;
+      top: 596px;
+      width: 1920px;
+      text-align: center;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 600;
+      font-size: 48px;
+      letter-spacing: -0.02em;
+      color: #f7ffa8;
+    }
+    #ou-stack {
+      position: absolute;
+      left: 0;
+      top: 690px;
+      width: 1920px;
+      text-align: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 24px;
+      color: #b4b3c0;
+      letter-spacing: 0.02em;
+    }
+  </style>
+  <div data-hf-id="hf-x7nm" id="root" data-composition-id="outro" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-9j2t" class="crow" style="top: 380px">
+      <div data-hf-id="hf-f5ow" class="chip" id="ou-c1"><svg data-hf-id="hf-6ww3" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-49ze" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path data-hf-id="hf-yfzu" d="m9 12 2 2 4-4" /></svg>Clerk auth</div>
+      <div data-hf-id="hf-17wr" class="chip" id="ou-c2"><svg data-hf-id="hf-iiyr" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-u8ox" d="M9 14 4 9l5-5" /><path data-hf-id="hf-xlq3" d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" /></svg>Undo / Redo</div>
+      <div data-hf-id="hf-ewuh" class="chip" id="ou-c3"><svg data-hf-id="hf-i4nq" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-l57f" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline data-hf-id="hf-9u64" points="7 10 12 15 17 10" /><line data-hf-id="hf-4itj" x1="12" x2="12" y1="15" y2="3" /></svg>JSON export · import</div>
+    </div>
+    <div data-hf-id="hf-enu4" class="crow" style="top: 486px">
+      <div data-hf-id="hf-izlp" class="chip" id="ou-c4"><svg data-hf-id="hf-hqcp" class="i" viewBox="0 0 24 24" stroke-width="2"><ellipse data-hf-id="hf-z7vs" cx="12" cy="5" rx="9" ry="3" /><path data-hf-id="hf-a1jg" d="M3 5V19A9 3 0 0 0 21 19V5" /><path data-hf-id="hf-b07u" d="M3 12A9 3 0 0 0 21 12" /></svg>PostgreSQL + Prisma</div>
+      <div data-hf-id="hf-avlq" class="chip" id="ou-c5"><svg data-hf-id="hf-hc1o" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-lnmi" d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1" /><path data-hf-id="hf-v4vj" d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1" /></svg>Zod-validated APIs</div>
+      <div data-hf-id="hf-2g7s" class="chip" id="ou-c6"><svg data-hf-id="hf-gxqn" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-yp8g" d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" /><path data-hf-id="hf-byjp" d="M15 5.764v15" /><path data-hf-id="hf-v2e0" d="M9 3.236v15" /></svg>MiniMap · fit view</div>
+    </div>
+
+    <div data-hf-id="hf-lqep" id="ou-burst" data-layout-ignore></div>
+    <div data-hf-id="hf-26z1" id="ou-mark">
+      <div data-hf-id="hf-nvgh" id="ou-icon"><i data-hf-id="hf-g2w8" style="left: 16px; top: 51px; width: 16px; height: 16px"></i><i data-hf-id="hf-i40f" style="right: 16px; top: 51px; width: 16px; height: 16px"></i><b data-hf-id="hf-xujp"></b></div>
+      <div data-hf-id="hf-y804" id="ou-word" data-layout-allow-overlap>Workflow Builder<span data-hf-id="hf-p84h" class="ou-ghost" id="ou-g1" style="color: #f1a0fa">Workflow Builder</span><span data-hf-id="hf-vw9o" class="ou-ghost" id="ou-g2" style="color: #45a08a">Workflow Builder</span><span data-hf-id="hf-y326" id="ou-shine" aria-hidden="true" data-layout-ignore>Workflow Builder</span></div>
+    </div>
+        <p data-hf-id="hf-lhud" id="ou-sub">Artistic Intelligence.</p>
+    <p data-hf-id="hf-yurr" id="ou-stack">Next.js · React Flow · Trigger.dev · Gemini · Transloadit · Clerk</p>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // Feature chips stack on the half-beat, then hold as a set.
+    const chips = ["#ou-c1", "#ou-c2", "#ou-c3", "#ou-c4", "#ou-c5", "#ou-c6"];
+    tl.fromTo(chips, { opacity: 0, y: 34, scale: 0.85, filter: "blur(8px)" }, { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.42, ease: "expo.out", stagger: 0.27 }, 0.05);
+    // Chips fold into the mark.
+    const fold = [[430, 60], [0, 60], [-430, 60], [430, -46], [0, -46], [-430, -46]];
+    chips.forEach((c, i) => {
+      tl.to(c, { x: fold[i][0], y: fold[i][1], scale: 0.2, opacity: 0, filter: "blur(6px)", duration: 0.32, ease: "power3.in" }, 2.4);
+    });
+    // beat-locked: 55.11s — the wordmark lands.
+    tl.fromTo("#ou-burst", { scale: 0.2, opacity: 0.9 }, { scale: 2.6, opacity: 0, duration: 0.9, ease: "power2.out", immediateRender: false }, 2.73);
+    tl.fromTo("#ou-icon", { scale: 0, rotation: -25 }, { scale: 1, rotation: 0, duration: 0.55, ease: "expo.out" }, 2.73);
+    tl.fromTo("#ou-word", { opacity: 0, filter: "blur(14px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 2.76);
+    tl.fromTo("#ou-g1", { x: -20, opacity: 0.9 }, { x: 0, opacity: 0, duration: 0.5, ease: "expo.out", immediateRender: false }, 2.76);
+    tl.fromTo("#ou-g2", { x: 20, opacity: 0.9 }, { x: 0, opacity: 0, duration: 0.5, ease: "expo.out", immediateRender: false }, 2.76);
+    // Light sweep across the letters only.
+    tl.fromTo("#ou-shine", { backgroundPosition: "100% 0%" }, { backgroundPosition: "0% 0%", duration: 1.0, ease: "power2.inOut" }, 3.35);
+    tl.fromTo("#ou-sub", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 3.25);
+    tl.fromTo("#ou-stack", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 3.6);
+    window.__timelines["outro"] = tl;
+  </script>
+</template>

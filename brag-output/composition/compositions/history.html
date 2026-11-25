@@ -1,0 +1,303 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/PlusJakartaSans-var.woff2") format("woff2");
+      font-weight: 200 900;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "Inter", sans-serif;
+      color: #f2f0f8;
+    }
+    svg.i {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #hs-left {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1220px;
+      height: 1080px;
+    }
+    #hs-cap {
+      position: absolute;
+      left: 130px;
+      top: 330px;
+      width: 1000px;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 800;
+      font-size: 96px;
+      line-height: 1.02;
+      letter-spacing: -0.045em;
+    }
+    #hs-cap .w {
+      display: inline-block;
+      margin-right: 0.2em;
+    }
+    #hs-cap .acc {
+      color: #f7ffa8;
+    }
+    #hs-sub {
+      position: absolute;
+      left: 134px;
+      top: 560px;
+      width: 1000px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 27px;
+      line-height: 1.6;
+      color: #b4b3c0;
+    }
+    #hs-panel {
+      position: absolute;
+      left: 1220px;
+      top: 0;
+      width: 700px;
+      height: 1080px;
+      background: #1a1a1e;
+      border-left: 1.5px solid #2e2e34;
+      box-shadow: -40px 0 120px rgba(0, 0, 0, 0.6);
+    }
+    #hs-head {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 700px;
+      height: 92px;
+      background: #151518;
+      border-bottom: 1.5px solid #2e2e34;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+      font-size: 26px;
+      font-weight: 600;
+    }
+    #hs-head .cnt {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 17px;
+      font-weight: 500;
+      color: #b4b3c0;
+      background: #27272e;
+      border-radius: 999px;
+      padding: 2px 11px;
+    }
+    #hs-head .ic {
+      margin-left: auto;
+      display: flex;
+      gap: 18px;
+      color: #9b9ba7;
+    }
+    .run {
+      position: absolute;
+      left: 22px;
+      width: 656px;
+      background: #212126;
+      border: 1.5px solid #2e2e34;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .run.live {
+      border-color: rgba(245, 158, 11, 0.55);
+      box-shadow: 0 0 22px rgba(245, 158, 11, 0.18);
+    }
+    .rh {
+      position: relative;
+      height: 84px;
+    }
+    .rh .chev {
+      position: absolute;
+      left: 18px;
+      top: 22px;
+      width: 24px;
+      height: 24px;
+      color: #9b9ba7;
+    }
+    .rh .nm {
+      position: absolute;
+      left: 54px;
+      top: 14px;
+      font-size: 21px;
+      font-weight: 700;
+    }
+    .rh .nm em {
+      font-style: normal;
+      font-weight: 400;
+      font-size: 17px;
+      color: #9b9ba7;
+      margin-left: 10px;
+    }
+    .rh .meta {
+      position: absolute;
+      left: 54px;
+      top: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      color: #b4b3c0;
+    }
+    .rh .scope {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      background: #2b2b32;
+      border-radius: 5px;
+      padding: 1px 8px;
+    }
+    .badge {
+      position: absolute;
+      right: 18px;
+      top: 26px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 4px 12px;
+      border: 1.5px solid;
+    }
+    .b-ok {
+      background: #0b2a20;
+      color: #34d399;
+      border-color: #14614a;
+    }
+    .b-fail {
+      background: #2e1218;
+      color: #fb7185;
+      border-color: #7f2337;
+    }
+    .b-run {
+      background: #2e2008;
+      color: #fbbf24;
+      border-color: #7a5410;
+    }
+    #hs-tree {
+      position: relative;
+      background: #1a1a1f;
+      border-top: 1.5px solid #2a2a30;
+      padding: 10px 18px 14px;
+    }
+    .nr {
+      position: relative;
+      height: 64px;
+      padding-left: 36px;
+    }
+    .nr .st {
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 24px;
+      height: 24px;
+    }
+    .nr .a {
+      font-size: 19px;
+      font-weight: 600;
+      padding-top: 4px;
+    }
+    .nr .a code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      font-weight: 400;
+      color: #9b9ba7;
+      margin-left: 8px;
+    }
+    .nr .t {
+      position: absolute;
+      right: 0;
+      top: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 16px;
+      color: #b4b3c0;
+    }
+    .nr .o {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      color: #b4b3c0;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+    .nr.bad .o {
+      color: #fda4af;
+    }
+    #hs-badbg {
+      position: absolute;
+      left: -10px;
+      right: -10px;
+      top: -4px;
+      bottom: -2px;
+      border-radius: 8px;
+      background: rgba(251, 113, 133, 0.16);
+      opacity: 0;
+    }
+    #hs-cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 38px;
+      height: 38px;
+    }
+  </style>
+  <div data-hf-id="hf-zh09" id="root" data-composition-id="history" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-zpxc" id="hs-left">
+      <h2 data-hf-id="hf-8wxw" id="hs-cap"><span data-hf-id="hf-4q4b" class="w">Every</span><span data-hf-id="hf-zsxl" class="w">run.</span><br data-hf-id="hf-x5px" /><span data-hf-id="hf-xiae" class="w acc">Every</span><span data-hf-id="hf-o7rr" class="w acc">node.</span></h2>
+      <p data-hf-id="hf-m7n0" id="hs-sub">Full, selected and single-node runs —<br data-hf-id="hf-rsrt" />persisted to PostgreSQL with Prisma.</p>
+    </div>
+    <aside data-hf-id="hf-wu92" id="hs-panel">
+      <div data-hf-id="hf-ttok" id="hs-head"><svg data-hf-id="hf-gx34" class="i" viewBox="0 0 24 24" width="26" height="26" stroke-width="2" style="color: #f7ffa8"><path data-hf-id="hf-i1c6" d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path data-hf-id="hf-jwj3" d="M3 3v5h5" /><path data-hf-id="hf-x08s" d="M12 7v5l4 2" /></svg>Workflow History<span data-hf-id="hf-2x4a" class="cnt">4</span><span data-hf-id="hf-8dw9" class="ic"><svg data-hf-id="hf-anpw" class="i" viewBox="0 0 24 24" width="22" height="22" stroke-width="2"><path data-hf-id="hf-i1j2" d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path data-hf-id="hf-pseq" d="M21 3v5h-5" /><path data-hf-id="hf-56nx" d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path data-hf-id="hf-8lg6" d="M8 16H3v5" /></svg><svg data-hf-id="hf-pjt0" class="i" viewBox="0 0 24 24" width="24" height="24" stroke-width="2"><path data-hf-id="hf-pdkr" d="M18 6 6 18" /><path data-hf-id="hf-p78z" d="m6 6 12 12" /></svg></span></div>
+
+      <div data-hf-id="hf-yc1v" class="run live" id="hs-r1" style="top: 114px">
+        <div data-hf-id="hf-vyri" class="rh"><svg data-hf-id="hf-88kr" class="i chev" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-qnuk" d="m9 18 6-6-6-6" /></svg><div data-hf-id="hf-wkiw" class="nm">Run #126<em data-hf-id="hf-t2jx">Just now</em></div><div data-hf-id="hf-uqg4" class="meta"><span data-hf-id="hf-wnmq" class="scope">full</span>8 nodes</div>
+          <div data-hf-id="hf-4pv6" class="badge b-run"><svg data-hf-id="hf-6r5c" id="hs-spin" class="i" viewBox="0 0 24 24" width="16" height="16" stroke-width="2.6"><path data-hf-id="hf-ppa5" d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>Running</div></div>
+      </div>
+      <div data-hf-id="hf-2gdh" class="run" id="hs-r2" style="top: 214px">
+        <div data-hf-id="hf-pfoi" class="rh"><svg data-hf-id="hf-t2rv" class="i chev" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-dq5w" d="m9 18 6-6-6-6" /></svg><div data-hf-id="hf-vdlt" class="nm">Run #125<em data-hf-id="hf-m0wg">1m ago</em></div><div data-hf-id="hf-v4ur" class="meta"><span data-hf-id="hf-fuen" class="scope">single</span>⏱ 2.8s</div>
+          <div data-hf-id="hf-50my" class="badge b-ok"><svg data-hf-id="hf-9g1i" class="i" viewBox="0 0 24 24" width="16" height="16" stroke-width="2.4"><circle data-hf-id="hf-m1lh" cx="12" cy="12" r="10" /><path data-hf-id="hf-yfzu" d="m9 12 2 2 4-4" /></svg>Done</div></div>
+      </div>
+      <div data-hf-id="hf-hqcr" class="run" id="hs-r3" style="top: 314px">
+        <div data-hf-id="hf-ptzj" class="rh"><svg data-hf-id="hf-sogu" class="i chev" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-cj8t" d="m9 18 6-6-6-6" /></svg><div data-hf-id="hf-vrwu" class="nm">Run #124<em data-hf-id="hf-qdqe">3m ago</em></div><div data-hf-id="hf-dymr" class="meta"><span data-hf-id="hf-wx26" class="scope">partial · 2 nodes</span>⏱ 4.6s</div>
+          <div data-hf-id="hf-y0wu" class="badge b-ok"><svg data-hf-id="hf-dntm" class="i" viewBox="0 0 24 24" width="16" height="16" stroke-width="2.4"><circle data-hf-id="hf-jqh5" cx="12" cy="12" r="10" /><path data-hf-id="hf-b76m" d="m9 12 2 2 4-4" /></svg>Done</div></div>
+      </div>
+      <div data-hf-id="hf-ti35" class="run" id="hs-r4" style="top: 414px">
+        <div data-hf-id="hf-q8ak" class="rh"><svg data-hf-id="hf-d91h" class="i chev" id="hs-chev" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-cxju" d="m9 18 6-6-6-6" /></svg><div data-hf-id="hf-ukzr" class="nm">Run #123<em data-hf-id="hf-a9o3">6m ago</em></div><div data-hf-id="hf-5d49" class="meta"><span data-hf-id="hf-0rk6" class="scope">full</span>⏱ 8.4s</div>
+          <div data-hf-id="hf-8lmd" class="badge b-fail"><svg data-hf-id="hf-e24n" class="i" viewBox="0 0 24 24" width="16" height="16" stroke-width="2.4"><circle data-hf-id="hf-ozdc" cx="12" cy="12" r="10" /><path data-hf-id="hf-hru3" d="m15 9-6 6" /><path data-hf-id="hf-y8yh" d="m9 9 6 6" /></svg>Failed</div></div>
+        <div data-hf-id="hf-lbn3" id="hs-tree">
+          <div data-hf-id="hf-xrup" class="nr" id="hs-n1"><svg data-hf-id="hf-1ans" class="i st" viewBox="0 0 24 24" stroke-width="2.2" style="color: #34d399"><circle data-hf-id="hf-ol2b" cx="12" cy="12" r="10" /><path data-hf-id="hf-blhn" d="m9 12 2 2 4-4" /></svg><div data-hf-id="hf-khea" class="a">Text Node<code data-hf-id="hf-7zq1">(node-1)</code></div><div data-hf-id="hf-xcve" class="t">0.1s</div><div data-hf-id="hf-s3iv" class="o">└ Output: "Generate a product description..."</div></div>
+          <div data-hf-id="hf-1pyq" class="nr" id="hs-n2"><svg data-hf-id="hf-naq8" class="i st" viewBox="0 0 24 24" stroke-width="2.2" style="color: #34d399"><circle data-hf-id="hf-ijk2" cx="12" cy="12" r="10" /><path data-hf-id="hf-bzso" d="m9 12 2 2 4-4" /></svg><div data-hf-id="hf-tzta" class="a">Image Node<code data-hf-id="hf-7v5m">(node-2)</code></div><div data-hf-id="hf-ikgq" class="t">2.3s</div><div data-hf-id="hf-fx75" class="o">└ Output: https://cdn.transloadit.com/...</div></div>
+          <div data-hf-id="hf-5o2r" class="nr" id="hs-n3"><svg data-hf-id="hf-m3t5" class="i st" viewBox="0 0 24 24" stroke-width="2.2" style="color: #34d399"><circle data-hf-id="hf-i591" cx="12" cy="12" r="10" /><path data-hf-id="hf-97nh" d="m9 12 2 2 4-4" /></svg><div data-hf-id="hf-tufa" class="a">Crop Image<code data-hf-id="hf-j0on">(node-3)</code></div><div data-hf-id="hf-z13y" class="t">1.8s</div><div data-hf-id="hf-aptx" class="o">└ Output: https://cdn.transloadit.com/...</div></div>
+          <div data-hf-id="hf-i6l8" class="nr" id="hs-n4"><svg data-hf-id="hf-mi46" class="i st" viewBox="0 0 24 24" stroke-width="2.2" style="color: #34d399"><circle data-hf-id="hf-jc64" cx="12" cy="12" r="10" /><path data-hf-id="hf-9lyi" d="m9 12 2 2 4-4" /></svg><div data-hf-id="hf-kj08" class="a">LLM Node<code data-hf-id="hf-6bu0">(node-4)</code></div><div data-hf-id="hf-7qzd" class="t">4.2s</div><div data-hf-id="hf-t28z" class="o">└ Output: "Introducing our premium..."</div></div>
+          <div data-hf-id="hf-6jk6" class="nr bad" id="hs-n5"><div data-hf-id="hf-273t" id="hs-badbg"></div><svg data-hf-id="hf-i5cx" class="i st" viewBox="0 0 24 24" stroke-width="2.2" style="color: #fb7185"><circle data-hf-id="hf-ixv3" cx="12" cy="12" r="10" /><path data-hf-id="hf-0sgb" d="m15 9-6 6" /><path data-hf-id="hf-zq99" d="m9 9 6 6" /></svg><div data-hf-id="hf-wj4f" class="a">Extract Frame<code data-hf-id="hf-d9v9">(node-5)</code></div><div data-hf-id="hf-4nzq" class="t" style="color: #fb7185">Failed</div><div data-hf-id="hf-2lbf" class="o">└ Error: "Invalid timestamp parameter"</div></div>
+        </div>
+      </div>
+    </aside>
+    <svg data-hf-id="hf-3s6k" id="hs-cursor" class="i" viewBox="0 0 24 24" stroke-width="1.4" style="fill: #ffffff; stroke: #08080a" data-layout-ignore><path data-hf-id="hf-xi1z" d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" /></svg>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // beat-locked: 45.82s — the panel slams in from the right.
+    tl.fromTo("#hs-panel", { x: 700 }, { x: 0, duration: 0.45, ease: "expo.out" }, 0);
+    tl.fromTo(["#hs-r1", "#hs-r2", "#hs-r3", "#hs-r4"], { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: "expo.out", stagger: 0.08 }, 0.15);
+    tl.fromTo("#hs-spin", { rotation: 0 }, { rotation: 360 * 6, duration: 6.56, ease: "none" }, 0);
+    tl.fromTo("#hs-cap .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.08 }, 0.45);
+    tl.fromTo("#hs-sub", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.2);
+    // Click Run #123 to expand its node-level tree (47.72 abs).
+    tl.fromTo("#hs-cursor", { x: 1700, y: 880, opacity: 0 }, { x: 1700, y: 880, opacity: 1, duration: 0.15 }, 1.2);
+    tl.to("#hs-cursor", { x: 1420, y: 446, duration: 0.5, ease: "power2.inOut" }, 1.36);
+    tl.to("#hs-cursor", { scale: 0.85, duration: 0.08, yoyo: true, repeat: 1 }, 1.88);
+    tl.fromTo("#hs-chev", { rotation: 0 }, { rotation: 90, duration: 0.25, ease: "power3.out" }, 1.9);
+    tl.fromTo("#hs-tree", { clipPath: "inset(0% 0% 100% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.5, ease: "power3.out" }, 1.95);
+    tl.fromTo(["#hs-n1", "#hs-n2", "#hs-n3", "#hs-n4", "#hs-n5"], { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.35, ease: "expo.out", stagger: 0.1 }, 2.0);
+    tl.to("#hs-cursor", { x: 1500, y: 1000, opacity: 0, duration: 0.4, ease: "power2.in" }, 2.2);
+    tl.fromTo("#hs-badbg", { opacity: 0 }, { opacity: 1, duration: 0.12, yoyo: true, repeat: 3, ease: "none" }, 2.6);
+    tl.set("#hs-badbg", { opacity: 0.6 }, 3.08);
+    // Out: everything clears for the finale.
+    tl.to("#hs-panel", { x: 320, opacity: 0, filter: "blur(12px)", duration: 0.38, ease: "power3.in" }, 6.16);
+    tl.to("#hs-left", { opacity: 0, filter: "blur(12px)", duration: 0.3, ease: "power2.in" }, 6.18);
+    window.__timelines["history"] = tl;
+  </script>
+</template>

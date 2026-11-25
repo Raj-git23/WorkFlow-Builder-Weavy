@@ -1,0 +1,307 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/PlusJakartaSans-var.woff2") format("woff2");
+      font-weight: 200 900;
+    }
+    @font-face {
+      font-family: "DM Sans";
+      src: url("assets/fonts/DMSans-var.woff2") format("woff2");
+      font-weight: 100 1000;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "DM Sans", sans-serif;
+      color: #f2f0f8;
+    }
+    #cn-stage {
+      position: absolute;
+      inset: 0;
+    }
+    svg.i {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .title {
+      position: absolute;
+      left: 0;
+      top: 92px;
+      width: 1920px;
+      text-align: center;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 800;
+      font-size: 64px;
+      letter-spacing: -0.04em;
+    }
+    .title .w {
+      display: inline-block;
+      margin: 0 0.11em;
+    }
+    .title .acc {
+      color: #f7ffa8;
+    }
+    .node {
+      position: absolute;
+      width: 380px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 12px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+    }
+    .nt {
+      position: absolute;
+      left: 20px;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .nt svg {
+      width: 20px;
+      height: 20px;
+      color: #f7ffa8;
+    }
+    .txt {
+      position: absolute;
+      left: 20px;
+      top: 58px;
+      width: 340px;
+      height: 74px;
+      background: #1c1b1f;
+      border: 1.5px solid #302e33;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 17px;
+      line-height: 1.4;
+      color: #e4e2ec;
+      overflow: hidden;
+    }
+    .hd {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+    }
+    #cn-edges {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    #cn-edges path {
+      fill: none;
+      stroke-linecap: round;
+    }
+    .draw {
+      stroke-width: 3.5;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+    }
+    .march {
+      stroke-width: 3.5;
+      stroke-dasharray: 10 12;
+      opacity: 0;
+    }
+    #cn-llm {
+      left: 1060px;
+      top: 300px;
+      width: 460px;
+      height: 470px;
+    }
+    #cn-llm .sl {
+      position: absolute;
+      left: 20px;
+      top: 60px;
+      width: 420px;
+      height: 46px;
+      background: #1c1b1f;
+      border: 1.5px solid #302e33;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      font-size: 19px;
+    }
+    .hl {
+      position: absolute;
+      left: 22px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 17px;
+      font-weight: 500;
+    }
+    #cn-cp {
+      position: absolute;
+      left: 20px;
+      top: 270px;
+      width: 420px;
+      height: 98px;
+      background: #17161a;
+      border: 1.5px solid #302e33;
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    #cn-cp .k {
+      font-size: 14px;
+      color: #9b9ba7;
+    }
+    #cn-cp .v {
+      margin-top: 4px;
+      font-size: 16px;
+      line-height: 1.4;
+      color: #c9c7d3;
+    }
+    #cn-llm .rb {
+      position: absolute;
+      left: 20px;
+      top: 392px;
+      width: 420px;
+      height: 54px;
+      border-radius: 8px;
+      background: #f7ffa8;
+      color: #1c1b1f;
+      font-size: 19px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .tagx {
+      position: absolute;
+      left: 0;
+      top: 190px;
+      width: 1920px;
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+    }
+    .tagx span {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      border-radius: 999px;
+      background: #2a1418;
+      border: 1.5px solid #9f3a4a;
+      color: #fda4af;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 22px;
+      font-weight: 500;
+    }
+    .xmark {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #fb7185;
+      color: #2a1418;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+    }
+  </style>
+  <div data-hf-id="hf-yrmj" id="root" data-composition-id="connect" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-n883" id="cn-stage">
+      <h2 data-hf-id="hf-utj2" class="title" id="cn-t1"><span data-hf-id="hf-h7xe" class="w">Type-safe</span><span data-hf-id="hf-g3ga" class="w acc">connections.</span></h2>
+      <h2 data-hf-id="hf-qvf1" class="title" id="cn-t2"><span data-hf-id="hf-m3ry" class="w">Validated</span><span data-hf-id="hf-0lrs" class="w">as</span><span data-hf-id="hf-wnbn" class="w">you</span><span data-hf-id="hf-wbfs" class="w acc">wire.</span></h2>
+
+      <svg data-hf-id="hf-sbgv" id="cn-edges" viewBox="0 0 1920 1080" data-layout-ignore>
+        <path data-hf-id="hf-7ic5" id="cn-e1" class="draw" pathLength="1" stroke="#f1a0fa" d="M 560 325 C 810 325 810 438 1060 438" />
+        <path data-hf-id="hf-si08" id="cn-e2" class="draw" pathLength="1" stroke="#f1a0fa" d="M 560 545 C 810 545 810 488 1060 488" />
+        <path data-hf-id="hf-9ub1" id="cn-e3" class="draw" pathLength="1" stroke="#45a08a" d="M 560 790 C 810 790 810 538 1060 538" />
+        <path data-hf-id="hf-w5d6" id="cn-m1" class="march" stroke="#f9c8fd" d="M 560 325 C 810 325 810 438 1060 438" />
+        <path data-hf-id="hf-k6nl" id="cn-m2" class="march" stroke="#f9c8fd" d="M 560 545 C 810 545 810 488 1060 488" />
+        <path data-hf-id="hf-22no" id="cn-m3" class="march" stroke="#8fd9c4" d="M 560 790 C 810 790 810 538 1060 538" />
+        <g data-hf-id="hf-aei9" id="cn-badw">
+          <path data-hf-id="hf-nzjj" id="cn-bad" class="draw" pathLength="1" stroke="#45a08a" d="M 560 790 C 830 790 790 438 1060 438" />
+        </g>
+        <g data-hf-id="hf-27db" id="cn-cycw">
+          <path data-hf-id="hf-lpg1" id="cn-cyc" class="draw" pathLength="1" stroke="#f1a0fa" d="M 1520 535 C 1780 535 1780 210 1290 210 C 860 210 880 488 1060 488" />
+        </g>
+      </svg>
+
+      <div data-hf-id="hf-8g3y" class="node" id="cn-n1" style="left: 180px; top: 250px; height: 150px">
+        <div data-hf-id="hf-rdyc" class="nt"><svg data-hf-id="hf-6ww3" class="i" viewBox="0 0 24 24" stroke-width="2"><polyline data-hf-id="hf-9yrg" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-t8ad" x1="9" x2="15" y1="20" y2="20" /><line data-hf-id="hf-g3i4" x1="12" x2="12" y1="4" y2="20" /></svg>Prompt</div>
+        <div data-hf-id="hf-xyol" class="txt">You are a professional marketing copywriter…</div>
+        <div data-hf-id="hf-a8hd" class="hd" style="left: 371px; top: 66px; background: #f1a0fa"></div>
+      </div>
+      <div data-hf-id="hf-pa7j" class="node" id="cn-n2" style="left: 180px; top: 470px; height: 150px">
+        <div data-hf-id="hf-lgd8" class="nt"><svg data-hf-id="hf-iiyr" class="i" viewBox="0 0 24 24" stroke-width="2"><polyline data-hf-id="hf-pdx0" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-75nt" x1="9" x2="15" y1="20" y2="20" /><line data-hf-id="hf-w5ys" x1="12" x2="12" y1="4" y2="20" /></svg>Prompt</div>
+        <div data-hf-id="hf-5bhg" class="txt">Product: Wireless Bluetooth Headphones…</div>
+        <div data-hf-id="hf-5b39" class="hd" style="left: 371px; top: 66px; background: #f1a0fa"></div>
+      </div>
+      <div data-hf-id="hf-zgz4" class="node" id="cn-n3" style="left: 180px; top: 690px; height: 200px">
+        <div data-hf-id="hf-d4ni" class="nt"><svg data-hf-id="hf-i4nq" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-wyzk" d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" /><circle data-hf-id="hf-ymtw" cx="9" cy="9" r="2" /></svg>Upload Image</div>
+        <img data-hf-id="hf-ztm5" src="assets/img/headphones.jpg" alt="" style="position: absolute; left: 20px; top: 58px; width: 340px; height: 124px; object-fit: cover; border-radius: 8px" />
+        <div data-hf-id="hf-sew7" class="hd" style="left: 371px; top: 91px; background: #45a08a"></div>
+      </div>
+
+      <div data-hf-id="hf-ghjj" class="node" id="cn-llm">
+        <div data-hf-id="hf-nw6v" class="nt"><svg data-hf-id="hf-hqcp" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-hhq3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /></svg>Google Gemini LLM</div>
+        <div data-hf-id="hf-002g" class="sl">Gemini 3.5 Flash</div>
+        <div data-hf-id="hf-bwhl" class="hl" style="top: 126px; color: #f1a0fa">System Prompt</div>
+        <div data-hf-id="hf-if5n" class="hl" style="top: 176px; color: #f1a0fa">User Message*</div>
+        <div data-hf-id="hf-o6if" class="hl" style="top: 226px; color: #45a08a">Image 1</div>
+        <div data-hf-id="hf-ysby" id="cn-cp"><div data-hf-id="hf-09lb" class="k">Connected Prompt · manual field disabled</div><div data-hf-id="hf-xmmo" class="v">Product: Wireless Bluetooth Headphones. Features: Noise cancellation…</div></div>
+        <div data-hf-id="hf-9pbs" class="rb"><svg data-hf-id="hf-qv96" class="i" viewBox="0 0 24 24" width="16" height="16" stroke-width="2.4" style="fill: #1c1b1f"><polygon data-hf-id="hf-iq02" points="6 3 20 12 6 21 6 3" /></svg>Run Model</div>
+        <div data-hf-id="hf-vfml" class="hd" id="cn-h1" style="left: -10px; top: 129px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-jnf9" class="hd" id="cn-h2" style="left: -10px; top: 179px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-8b2m" class="hd" id="cn-h3" style="left: -10px; top: 229px; background: #45a08a"></div>
+        <div data-hf-id="hf-9u3w" class="hd" style="left: 451px; top: 226px; background: #f1a0fa"></div>
+      </div>
+
+      <div data-hf-id="hf-pp4o" class="xmark" id="cn-x1" style="left: 1038px; top: 416px"><svg data-hf-id="hf-zctb" class="i" viewBox="0 0 24 24" width="26" height="26" stroke-width="3"><path data-hf-id="hf-pdkr" d="M18 6 6 18" /><path data-hf-id="hf-p78z" d="m6 6 12 12" /></svg></div>
+      <div data-hf-id="hf-5a4c" class="xmark" id="cn-x2" style="left: 1038px; top: 466px"><svg data-hf-id="hf-tee7" class="i" viewBox="0 0 24 24" width="26" height="26" stroke-width="3"><path data-hf-id="hf-57ln" d="M18 6 6 18" /><path data-hf-id="hf-6mhf" d="m6 6 12 12" /></svg></div>
+      <div data-hf-id="hf-e19b" class="tagx" id="cn-tag1"><span data-hf-id="hf-slhv">✕ image → System Prompt · blocked</span></div>
+      <div data-hf-id="hf-5ddg" class="tagx" id="cn-tag2"><span data-hf-id="hf-p3gp">↻ cycle detected · workflows stay a DAG</span></div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // beat-locked: 19.64s — the drop. Canvas whips in from the right.
+    tl.fromTo("#cn-stage", { x: 520, opacity: 0, filter: "blur(18px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.45, ease: "expo.out" }, 0);
+    tl.fromTo("#cn-t1 .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.09 }, 0.3);
+    // beat-grid: three valid connections on consecutive beats (20.19 20.73 21.28 abs).
+    [["#cn-e1", "#cn-m1", "#cn-h1"], ["#cn-e2", "#cn-m2", "#cn-h2"], ["#cn-e3", "#cn-m3", "#cn-h3"]].forEach(([e, m, h], i) => {
+      const t = 0.55 + i * 0.545;
+      tl.fromTo(e, { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.4, ease: "power3.out" }, t - 0.4);
+      tl.fromTo(h, { scale: 1 }, { scale: 1.7, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1 }, t);
+      tl.fromTo(m, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t + 0.05);
+    });
+    // Marching dashes: animated edges run at constant speed for the rest of the scene.
+    tl.fromTo(".march", { strokeDashoffset: 0 }, { strokeDashoffset: -330, duration: 8.19, ease: "none" }, 0);
+    tl.fromTo("#cn-cp", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.15);
+    // Refusal 1: an image wire reaches for the System Prompt input.
+    tl.fromTo("#cn-bad", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.65, ease: "power2.inOut" }, 2.35);
+    tl.to("#cn-bad", { stroke: "#fb7185", duration: 0.08 }, 3.0);
+    tl.fromTo("#cn-badw", { x: 0 }, { x: 8, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, 3.0);
+    tl.fromTo("#cn-x1", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.25, ease: "expo.out" }, 3.0);
+    tl.fromTo("#cn-tag1", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out" }, 3.02);
+    tl.to("#cn-bad", { strokeDashoffset: 1, duration: 0.3, ease: "power3.in" }, 4.1);
+    tl.to(["#cn-x1", "#cn-tag1"], { opacity: 0, duration: 0.2 }, 4.15);
+    // Title swap.
+    tl.to("#cn-t1", { opacity: 0, filter: "blur(10px)", duration: 0.18, ease: "power2.in" }, 4.4);
+    tl.fromTo("#cn-t2 .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.08 }, 4.6);
+    // Refusal 2: the LLM output loops back into its own input.
+    tl.fromTo("#cn-cyc", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.6, ease: "power2.inOut" }, 5.0);
+    tl.to("#cn-cyc", { stroke: "#fb7185", duration: 0.08 }, 5.6);
+    tl.fromTo("#cn-cycw", { y: 0 }, { y: 7, duration: 0.05, yoyo: true, repeat: 5, ease: "none" }, 5.6);
+    tl.fromTo("#cn-x2", { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.25, ease: "expo.out" }, 5.6);
+    tl.fromTo("#cn-tag2", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.18, ease: "power4.out" }, 5.62);
+    tl.to("#cn-cyc", { strokeDashoffset: -1, duration: 0.3, ease: "power3.in" }, 7.0);
+    tl.to(["#cn-x2", "#cn-tag2"], { opacity: 0, duration: 0.2 }, 7.05);
+    // Camera pulls back to the whole workflow.
+    tl.to("#cn-stage", { scale: 0.6, opacity: 0, filter: "blur(10px)", duration: 0.44, ease: "power2.in" }, 7.75);
+    window.__timelines["connect"] = tl;
+  </script>
+</template>

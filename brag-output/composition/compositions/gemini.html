@@ -1,0 +1,307 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/PlusJakartaSans-var.woff2") format("woff2");
+      font-weight: 200 900;
+    }
+    @font-face {
+      font-family: "DM Sans";
+      src: url("assets/fonts/DMSans-var.woff2") format("woff2");
+      font-weight: 100 1000;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "DM Sans", sans-serif;
+      color: #f2f0f8;
+    }
+    #gm-stage {
+      position: absolute;
+      inset: 0;
+    }
+    svg.i {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #gm-node {
+      position: absolute;
+      left: 170px;
+      top: 120px;
+      width: 840px;
+      height: 840px;
+      background: #212126;
+      border: 2px solid #302e33;
+      border-radius: 16px;
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
+    }
+    #gm-glw {
+      position: absolute;
+      inset: -4px;
+      border-radius: 18px;
+      border: 3px solid #f7ffa8;
+      box-shadow: 0 0 60px rgba(247, 255, 168, 0.55);
+      opacity: 0;
+    }
+    .row {
+      position: absolute;
+      left: 30px;
+      right: 30px;
+    }
+    #gm-title {
+      top: 26px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 32px;
+      font-weight: 600;
+    }
+    #gm-title .dots {
+      margin-left: auto;
+      color: #9a9ab0;
+    }
+    #gm-sel {
+      top: 90px;
+      height: 76px;
+      background: #1c1b1f;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      padding: 10px 18px;
+    }
+    #gm-sel .a {
+      font-size: 24px;
+      font-weight: 500;
+    }
+    #gm-sel .b {
+      font-size: 17px;
+      color: #b4b3c0;
+      margin-top: 2px;
+    }
+    #gm-sel svg {
+      position: absolute;
+      right: 18px;
+      top: 24px;
+      width: 26px;
+      height: 26px;
+      color: #9a9ab0;
+    }
+    #gm-refh {
+      top: 184px;
+      display: flex;
+      font-size: 19px;
+      color: #b4b3c0;
+    }
+    #gm-refh .add {
+      margin-left: auto;
+      color: #f7ffa8;
+    }
+    #gm-slots {
+      top: 218px;
+      height: 156px;
+      background: #17161a;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+    }
+    .slot {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1.5px solid #302e33;
+    }
+    .slot img {
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+    }
+    .slot span {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      background: rgba(0, 0, 0, 0.75);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      color: #ffffff;
+    }
+    .slot.empty {
+      border-style: dashed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      color: #9b9ba7;
+    }
+    #gm-sys {
+      top: 392px;
+      height: 52px;
+      background: #17161a;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      font-size: 18px;
+      color: #c9c7d3;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    #gm-sys b {
+      color: #f1a0fa;
+      font-weight: 600;
+    }
+    #gm-resh {
+      top: 464px;
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+    }
+    #gm-resh .l {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #f7ffa8;
+      font-weight: 600;
+    }
+    #gm-resh .r {
+      margin-left: auto;
+      color: #b4b3c0;
+      font-size: 18px;
+    }
+    #gm-res {
+      top: 502px;
+      height: 228px;
+      background: #121115;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      padding: 20px 24px;
+      font-size: 27px;
+      line-height: 1.5;
+      color: #ecebf3;
+    }
+    #gm-res .tag {
+      color: #f7ffa8;
+    }
+    #gm-caret {
+      display: inline-block;
+      width: 12px;
+      height: 30px;
+      margin-left: 3px;
+      vertical-align: -5px;
+      background: #f7ffa8;
+      opacity: 0;
+    }
+    #gm-foot {
+      top: 756px;
+      display: flex;
+      align-items: center;
+    }
+    #gm-foot .clr {
+      font-size: 19px;
+      color: #b4b3c0;
+    }
+    #gm-foot .rr {
+      margin-left: auto;
+      height: 56px;
+      padding: 0 30px;
+      border-radius: 10px;
+      background: #f7ffa8;
+      color: #1c1b1f;
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+    #gm-cap {
+      position: absolute;
+      left: 1110px;
+      top: 380px;
+      width: 760px;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 800;
+      font-size: 78px;
+      line-height: 1.04;
+      letter-spacing: -0.045em;
+    }
+    #gm-cap .w {
+      display: inline-block;
+      margin-right: 0.2em;
+    }
+    #gm-cap .acc {
+      color: #f7ffa8;
+    }
+    #gm-sub {
+      position: absolute;
+      left: 1110px;
+      top: 590px;
+      width: 760px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 24px;
+      line-height: 1.6;
+      color: #b4b3c0;
+    }
+  </style>
+  <div data-hf-id="hf-9g6o" id="root" data-composition-id="gemini" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-sj08" id="gm-stage">
+      <div data-hf-id="hf-1oe6" id="gm-node">
+        <div data-hf-id="hf-fe16" id="gm-glw"></div>
+        <div data-hf-id="hf-f2z8" class="row" id="gm-title"><svg data-hf-id="hf-0c82" class="i" viewBox="0 0 24 24" width="30" height="30" stroke-width="2" style="color: #f7ffa8"><path data-hf-id="hf-hhq3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /><path data-hf-id="hf-r3z8" d="M20 3v4" /><path data-hf-id="hf-6c9h" d="M22 5h-4" /></svg>Google Gemini LLM<span data-hf-id="hf-ea4x" class="dots">•••</span></div>
+        <div data-hf-id="hf-h949" class="row" id="gm-sel"><div data-hf-id="hf-38qk" class="a">Gemini 3.5 Flash</div><div data-hf-id="hf-0c6j" class="b">Best for vision &amp; multimodal, fast &amp; stable (Free tier)</div><svg data-hf-id="hf-6ww3" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-tdtv" d="m7 15 5 5 5-5" /><path data-hf-id="hf-0o9g" d="m7 9 5-5 5 5" /></svg></div>
+        <div data-hf-id="hf-4j82" class="row" id="gm-refh"><span data-hf-id="hf-l0ex">Reference Images (2)</span><span data-hf-id="hf-831z" class="add">+ Add Image Slot</span></div>
+        <div data-hf-id="hf-b6ru" class="row" id="gm-slots">
+          <div data-hf-id="hf-lzc3" class="slot" id="gm-s1"><img data-hf-id="hf-2ntj" src="assets/img/headphones-crop.jpg" alt="" /><span data-hf-id="hf-l73p">#1</span></div>
+          <div data-hf-id="hf-dbg8" class="slot" id="gm-s2"><img data-hf-id="hf-3yt7" src="assets/img/frame50.jpg" alt="" /><span data-hf-id="hf-me0s">#2</span></div>
+          <div data-hf-id="hf-6grz" class="slot empty" id="gm-s3">Img #3<br data-hf-id="hf-x5px" />Connect</div>
+        </div>
+        <div data-hf-id="hf-b2nr" class="row" id="gm-sys"><svg data-hf-id="hf-5afb" class="i" viewBox="0 0 24 24" width="20" height="20" stroke-width="2" style="color: #f1a0fa"><path data-hf-id="hf-2fyj" d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" /></svg><b data-hf-id="hf-vs5u">System:</b>You are a social media manager. Create a tweet-length marketing post…</div>
+        <div data-hf-id="hf-k6y9" class="row" id="gm-resh"><span data-hf-id="hf-q5nf" class="l"><svg data-hf-id="hf-okto" class="i" viewBox="0 0 24 24" width="20" height="20" stroke-width="2"><path data-hf-id="hf-7jy3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /></svg>Gemini Response</span><span data-hf-id="hf-q3kl" class="r">Copy Markdown</span></div>
+        <div data-hf-id="hf-qnqz" class="row" id="gm-res"><span data-hf-id="hf-9mny" id="gm-type">Silence the noise, keep the vibe. Wireless Bluetooth headphones with noise cancellation, a 30-hour battery and a foldable design that goes anywhere. Your soundtrack, uninterrupted.</span><span data-hf-id="hf-bxtj" class="tag" id="gm-tag"> #SoundOn</span><span data-hf-id="hf-fxms" id="gm-caret"></span></div>
+        <div data-hf-id="hf-70l7" class="row" id="gm-foot"><span data-hf-id="hf-k9rs" class="clr">Clear Output</span><span data-hf-id="hf-5qog" class="rr"><svg data-hf-id="hf-qv96" class="i" viewBox="0 0 24 24" width="16" height="16" stroke-width="2.4" style="fill: #1c1b1f"><polygon data-hf-id="hf-iq02" points="6 3 20 12 6 21 6 3" /></svg>Re-run</span></div>
+      </div>
+
+      <h2 data-hf-id="hf-q7fz" id="gm-cap"><span data-hf-id="hf-1m9z" class="w">Gemini</span><span data-hf-id="hf-7d5f" class="w">answers</span><br data-hf-id="hf-rsrt" /><span data-hf-id="hf-ox8u" class="w acc">on</span><span data-hf-id="hf-oeuu" class="w acc">the</span><span data-hf-id="hf-o7rr" class="w acc">node.</span></h2>
+      <p data-hf-id="hf-7n6q" id="gm-sub">system prompt · user message ·<br data-hf-id="hf-szow" />multiple images in.<br data-hf-id="hf-sldv" />No separate output node.</p>
+    </div>
+  </div>
+  <script>
+    // Split the response into characters so it can type out on the timeline (built once, deterministic).
+    const typeEl = document.querySelector("#gm-type");
+    const text = typeEl.textContent;
+    typeEl.textContent = "";
+    for (const ch of text) {
+      const s = document.createElement("span");
+      s.className = "gm-ch";
+      s.textContent = ch;
+      typeEl.appendChild(s);
+    }
+    const tl = gsap.timeline({ paused: true });
+    // Arrives from the dive, still carrying the run glow, which settles.
+    tl.fromTo("#gm-node", { scale: 0.84, opacity: 0, filter: "blur(12px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.55, ease: "expo.out" }, 0);
+    tl.fromTo("#gm-glw", { opacity: 1 }, { opacity: 0, duration: 0.9, ease: "power2.out" }, 0.15);
+    tl.fromTo(["#gm-s1", "#gm-s2", "#gm-s3"], { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.4, ease: "expo.out", stagger: 0.12 }, 0.55);
+    tl.fromTo(["#gm-resh", "#gm-res"], { opacity: 0 }, { opacity: 1, duration: 0.25 }, 1.0);
+    // Response types out (40.14 → 42.74 abs).
+    const chars = document.querySelectorAll("#gm-type .gm-ch");
+    tl.fromTo(chars, { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none", stagger: 2.45 / chars.length }, 1.4);
+    tl.fromTo("#gm-tag", { opacity: 0 }, { opacity: 1, duration: 0.12 }, 3.9);
+    tl.fromTo("#gm-caret", { opacity: 1 }, { opacity: 0, duration: 0.27, ease: "steps(1)", yoyo: true, repeat: 7, immediateRender: false }, 4.05);
+    // Caption.
+    tl.fromTo("#gm-cap .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.08 }, 0.45);
+    tl.fromTo("#gm-sub", { opacity: 0, filter: "blur(6px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out" }, 1.5);
+    // Exit left as the history panel slams in.
+    tl.to("#gm-stage", { x: -260, opacity: 0, filter: "blur(14px)", duration: 0.36, ease: "power3.in" }, 6.72);
+    window.__timelines["gemini"] = tl;
+  </script>
+</template>

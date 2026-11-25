@@ -1,0 +1,2 @@
+Workflow Builder: a node-based LLM canvas where six nodes wire up type-safe, independent branches run in parallel as Trigger.dev tasks, and Gemini answers right on the node.
+Every run, every node, logged to Postgres.

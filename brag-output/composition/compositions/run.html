@@ -1,0 +1,489 @@
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/PlusJakartaSans-var.woff2") format("woff2");
+      font-weight: 200 900;
+    }
+    @font-face {
+      font-family: "DM Sans";
+      src: url("assets/fonts/DMSans-var.woff2") format("woff2");
+      font-weight: 100 1000;
+    }
+    #root {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      font-family: "DM Sans", sans-serif;
+      color: #f2f0f8;
+    }
+    #rn-stage {
+      position: absolute;
+      inset: 0;
+    }
+    svg.i {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    #rn-name {
+      position: absolute;
+      left: 60px;
+      top: 30px;
+      height: 54px;
+      padding: 0 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 10px;
+      font-size: 21px;
+      font-weight: 500;
+    }
+    #rn-name .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #f7ffa8;
+    }
+    #rn-run {
+      position: absolute;
+      left: 1616px;
+      top: 30px;
+      width: 244px;
+      height: 54px;
+      border-radius: 10px;
+      background: #f7ffa8;
+      color: #1c1b1f;
+      font-size: 21px;
+      font-weight: 700;
+    }
+    #rn-run .lb {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    #rn-lb2 {
+      opacity: 0;
+    }
+    #rn-spin {
+      width: 20px;
+      height: 20px;
+    }
+    #rn-phase {
+      position: absolute;
+      left: 660px;
+      top: 30px;
+      width: 600px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 17px;
+      color: #b4b3c0;
+    }
+    #rn-phase .p {
+      position: relative;
+      width: 96px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1.5px solid #302e33;
+      background: #17161a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b4b3c0;
+    }
+    #rn-phase .p .on {
+      position: absolute;
+      inset: -1.5px;
+      border-radius: 8px;
+      background: #f7ffa8;
+      color: #1c1b1f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      opacity: 0;
+    }
+    .blabel {
+      position: absolute;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: #d9e08a;
+    }
+    #rn-edges {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+    }
+    #rn-edges path {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+    .draw {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      opacity: 0.75;
+    }
+    .flow {
+      stroke-dasharray: 9 11;
+      opacity: 0;
+    }
+    .tile {
+      position: absolute;
+      width: 300px;
+      background: #212126;
+      border: 1.5px solid #302e33;
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    }
+    .tile .tt {
+      position: absolute;
+      left: 16px;
+      top: 13px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 19px;
+      font-weight: 600;
+    }
+    .tile .tt svg {
+      width: 18px;
+      height: 18px;
+      color: #f7ffa8;
+    }
+    .tile .th {
+      position: absolute;
+      left: 16px;
+      top: 50px;
+      width: 268px;
+      height: 124px;
+      border-radius: 7px;
+      overflow: hidden;
+    }
+    .tile .th img,
+    .tile .th video {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 268px;
+      height: 124px;
+      object-fit: cover;
+    }
+    .tile .tx {
+      position: absolute;
+      left: 16px;
+      top: 50px;
+      width: 268px;
+      height: 78px;
+      background: #1c1b1f;
+      border: 1.5px solid #302e33;
+      border-radius: 7px;
+      padding: 7px 11px;
+      font-size: 14.5px;
+      line-height: 1.38;
+      color: #dddbe6;
+      overflow: hidden;
+    }
+    .tile .glw {
+      position: absolute;
+      inset: -3px;
+      border-radius: 14px;
+      border: 2.5px solid #f7ffa8;
+      box-shadow: 0 0 46px rgba(247, 255, 168, 0.55), inset 0 0 22px rgba(247, 255, 168, 0.18);
+      opacity: 0;
+    }
+    .tile .ok {
+      position: absolute;
+      right: -12px;
+      top: -12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #10b981;
+      color: #052e1f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+    }
+    .tile .hd {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+    .llmt .sub {
+      position: absolute;
+      left: 16px;
+      top: 50px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px;
+      color: #b4b3c0;
+    }
+    .llmt .md {
+      position: absolute;
+      left: 16px;
+      top: 80px;
+      right: 16px;
+      height: 40px;
+      background: #1c1b1f;
+      border: 1.5px solid #302e33;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 16px;
+    }
+    .llmt .st {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 16px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .cap {
+      position: absolute;
+      left: 0;
+      top: 964px;
+      width: 1920px;
+      text-align: center;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-weight: 700;
+      font-size: 50px;
+      letter-spacing: -0.03em;
+    }
+    .cap .w {
+      display: inline-block;
+      margin: 0 0.1em;
+    }
+    .cap .acc {
+      color: #f7ffa8;
+    }
+    #rn-cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 40px;
+      height: 40px;
+      color: #ffffff;
+    }
+  </style>
+  <div data-hf-id="hf-6p04" id="root" data-composition-id="run" data-width="1920" data-height="1080">
+    <div data-hf-id="hf-kmek" id="rn-stage">
+      <svg data-hf-id="hf-hchc" id="rn-edges" viewBox="0 0 1920 1080" data-layout-ignore>
+        <path data-hf-id="hf-ckz0" id="rn-e1" class="draw" pathLength="1" stroke="#45a08a" d="M 400 265 C 440 265 440 265 480 265" />
+        <path data-hf-id="hf-jbml" id="rn-e2" class="draw" pathLength="1" stroke="#f1a0fa" d="M 400 465 C 630 465 630 382 860 382" />
+        <path data-hf-id="hf-zyu4" id="rn-e3" class="draw" pathLength="1" stroke="#f1a0fa" d="M 400 625 C 630 625 630 422 860 422" />
+        <path data-hf-id="hf-xl28" id="rn-e4" class="draw" pathLength="1" stroke="#45a08a" d="M 780 265 C 830 265 810 462 860 462" />
+        <path data-hf-id="hf-2sv6" id="rn-e5" class="draw" pathLength="1" stroke="#ea8362" d="M 400 835 C 440 835 440 835 480 835" />
+        <path data-hf-id="hf-g2ow" id="rn-e6" class="draw" pathLength="1" stroke="#f1a0fa" d="M 1200 185 C 1270 185 1270 482 1340 482" />
+        <path data-hf-id="hf-x3kg" id="rn-e7" class="draw" pathLength="1" stroke="#f1a0fa" d="M 1180 440 C 1260 440 1260 532 1340 532" />
+        <path data-hf-id="hf-ix98" id="rn-e8" class="draw" pathLength="1" stroke="#45a08a" d="M 780 265 C 1100 290 1180 582 1340 582" />
+        <path data-hf-id="hf-tflb" id="rn-e9" class="draw" pathLength="1" stroke="#45a08a" d="M 780 835 C 1100 835 1180 632 1340 632" />
+        <path data-hf-id="hf-v1tb" id="rn-f1" class="flow" stroke="#8fd9c4" d="M 400 265 C 440 265 440 265 480 265" />
+        <path data-hf-id="hf-ieue" id="rn-f2" class="flow" stroke="#f9c8fd" d="M 400 465 C 630 465 630 382 860 382" />
+        <path data-hf-id="hf-p759" id="rn-f3" class="flow" stroke="#f9c8fd" d="M 400 625 C 630 625 630 422 860 422" />
+        <path data-hf-id="hf-3nbz" id="rn-f4" class="flow" stroke="#8fd9c4" d="M 780 265 C 830 265 810 462 860 462" />
+        <path data-hf-id="hf-fhb2" id="rn-f5" class="flow" stroke="#f5b9a4" d="M 400 835 C 440 835 440 835 480 835" />
+        <path data-hf-id="hf-ds6d" id="rn-f6" class="flow" stroke="#f9c8fd" d="M 1200 185 C 1270 185 1270 482 1340 482" />
+        <path data-hf-id="hf-iu21" id="rn-f7" class="flow" stroke="#f9c8fd" d="M 1180 440 C 1260 440 1260 532 1340 532" />
+        <path data-hf-id="hf-bjrz" id="rn-f8" class="flow" stroke="#8fd9c4" d="M 780 265 C 1100 290 1180 582 1340 582" />
+        <path data-hf-id="hf-kxyq" id="rn-f9" class="flow" stroke="#8fd9c4" d="M 780 835 C 1100 835 1180 632 1340 632" />
+      </svg>
+
+      <div data-hf-id="hf-5nbv" class="blabel" style="left: 100px; top: 132px">BRANCH A</div>
+      <div data-hf-id="hf-od3l" class="blabel" style="left: 100px; top: 702px">BRANCH B</div>
+      <div data-hf-id="hf-qfyb" class="blabel" style="left: 1340px; top: 384px">CONVERGENCE</div>
+
+      <!-- Branch A -->
+      <div data-hf-id="hf-wuj9" class="tile" id="rn-a1" style="left: 100px; top: 170px; height: 190px">
+        <div data-hf-id="hf-hjms" class="glw"></div>
+        <div data-hf-id="hf-eyds" class="tt"><svg data-hf-id="hf-6ww3" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-wyzk" d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10l-3.1-3.1a2 2 0 0 0-2.814.014L6 21" /><circle data-hf-id="hf-ymtw" cx="9" cy="9" r="2" /></svg>Upload Image</div>
+        <div data-hf-id="hf-en3o" class="th"><img data-hf-id="hf-0bhi" src="assets/img/headphones.jpg" alt="" /></div>
+        <div data-hf-id="hf-4np4" class="hd" style="left: 293px; top: 88px; background: #45a08a"></div>
+        <div data-hf-id="hf-6kvy" class="ok"><svg data-hf-id="hf-gt4z" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-2q26" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+      <div data-hf-id="hf-sfjb" class="tile" id="rn-a2" style="left: 480px; top: 170px; height: 190px">
+        <div data-hf-id="hf-c9y4" class="glw"></div>
+        <div data-hf-id="hf-9gd4" class="tt"><svg data-hf-id="hf-iiyr" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-whvs" d="M6 2v14a2 2 0 0 0 2 2h14" /><path data-hf-id="hf-qr9z" d="M18 22V8a2 2 0 0 0-2-2H2" /></svg>Crop · 80%</div>
+        <div data-hf-id="hf-jte4" class="th"><img data-hf-id="hf-2ntj" src="assets/img/headphones-crop.jpg" alt="" /></div>
+        <div data-hf-id="hf-afab" class="hd" style="left: -8px; top: 88px; background: #45a08a"></div>
+        <div data-hf-id="hf-mok0" class="hd" style="left: 293px; top: 88px; background: #45a08a"></div>
+        <div data-hf-id="hf-emua" class="ok"><svg data-hf-id="hf-exab" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-l5ki" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+      <div data-hf-id="hf-gidi" class="tile" id="rn-a3" style="left: 100px; top: 394px; height: 146px">
+        <div data-hf-id="hf-b311" class="glw"></div>
+        <div data-hf-id="hf-nzi3" class="tt"><svg data-hf-id="hf-i4nq" class="i" viewBox="0 0 24 24" stroke-width="2"><polyline data-hf-id="hf-9yrg" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-g3i4" x1="12" x2="12" y1="4" y2="20" /></svg>System Prompt #1</div>
+        <div data-hf-id="hf-p1nj" class="tx">You are a professional marketing copywriter. Generate a compelling…</div>
+        <div data-hf-id="hf-q2ta" class="hd" style="left: 293px; top: 64px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-f15b" class="ok"><svg data-hf-id="hf-eiza" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-ljvj" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+      <div data-hf-id="hf-0zen" class="tile" id="rn-a4" style="left: 100px; top: 552px; height: 146px">
+        <div data-hf-id="hf-bhc2" class="glw"></div>
+        <div data-hf-id="hf-5s8v" class="tt"><svg data-hf-id="hf-hqcp" class="i" viewBox="0 0 24 24" stroke-width="2"><polyline data-hf-id="hf-pdx0" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-w5ys" x1="12" x2="12" y1="4" y2="20" /></svg>Product Details #1</div>
+        <div data-hf-id="hf-o18i" class="tx">Product: Wireless Bluetooth Headphones. Features: Noise cancellation…</div>
+        <div data-hf-id="hf-w1pe" class="hd" style="left: 293px; top: 64px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-ffgc" class="ok"><svg data-hf-id="hf-e4o9" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-ly6k" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+      <div data-hf-id="hf-as49" class="tile llmt" id="rn-a5" style="left: 860px; top: 330px; width: 320px; height: 220px">
+        <div data-hf-id="hf-dgv7" class="glw"></div>
+        <div data-hf-id="hf-rpix" class="tt"><svg data-hf-id="hf-hc1o" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-hhq3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /></svg>LLM #1</div>
+        <div data-hf-id="hf-htx4" class="sub">Description</div>
+        <div data-hf-id="hf-gk6m" class="md">Gemini 3.5 Flash</div>
+        <div data-hf-id="hf-81ww" class="st" id="rn-a5s0" style="color: #b4b3c0">waiting for inputs</div>
+        <div data-hf-id="hf-xpf1" class="st" id="rn-a5s1" style="color: #f7ffa8; opacity: 0">running on Trigger.dev…</div>
+        <div data-hf-id="hf-1jch" class="st" id="rn-a5s2" style="color: #34d399; opacity: 0">✓ description ready</div>
+        <div data-hf-id="hf-ydbs" class="hd" style="left: -8px; top: 45px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-xu5g" class="hd" style="left: -8px; top: 85px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-7uwl" class="hd" style="left: -8px; top: 125px; background: #45a08a"></div>
+        <div data-hf-id="hf-alr3" class="hd" style="left: 313px; top: 103px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-ftrd" class="ok"><svg data-hf-id="hf-dqd8" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-mchl" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+
+      <!-- Branch B -->
+      <div data-hf-id="hf-nexv" class="tile" id="rn-b1" style="left: 100px; top: 740px; height: 190px">
+        <div data-hf-id="hf-dv68" class="glw"></div>
+        <div data-hf-id="hf-nrg6" class="tt"><svg data-hf-id="hf-gxqn" class="i" viewBox="0 0 24 24" stroke-width="2"><rect data-hf-id="hf-m05h" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-zgky" d="M10 8.5l5 3.5-5 3.5z" /></svg>Upload Video</div>
+        <div data-hf-id="hf-imh1" class="th"><video data-hf-id="hf-xjfs" id="rn-vid" class="clip" data-start="0" data-duration="10.91" data-media-start="4" muted playsinline src="assets/video/raft.mp4"></video></div>
+        <div data-hf-id="hf-lfai" class="hd" style="left: 293px; top: 88px; background: #ea8362"></div>
+        <div data-hf-id="hf-g82e" class="ok"><svg data-hf-id="hf-dc27" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-mqsm" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+      <div data-hf-id="hf-b2z1" class="tile" id="rn-b2" style="left: 480px; top: 740px; height: 190px">
+        <div data-hf-id="hf-co95" class="glw"></div>
+        <div data-hf-id="hf-217h" class="tt"><svg data-hf-id="hf-gjfm" class="i" viewBox="0 0 24 24" stroke-width="2"><rect data-hf-id="hf-5fh5" width="18" height="18" x="3" y="3" rx="2" /><path data-hf-id="hf-zhce" d="M7 3v18" /><path data-hf-id="hf-e5fq" d="M3 12h18" /><path data-hf-id="hf-027x" d="M17 3v18" /></svg>Extract Frame · 50%</div>
+        <div data-hf-id="hf-j0s2" class="th"><img data-hf-id="hf-3yt7" src="assets/img/frame50.jpg" alt="" /></div>
+        <div data-hf-id="hf-uzxp" class="hd" style="left: -8px; top: 88px; background: #ea8362"></div>
+        <div data-hf-id="hf-lhmx" class="hd" style="left: 293px; top: 88px; background: #45a08a"></div>
+        <div data-hf-id="hf-gmdf" class="ok"><svg data-hf-id="hf-cxr6" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-n53n" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+
+      <!-- Convergence -->
+      <div data-hf-id="hf-6jre" class="tile" id="rn-c1" style="left: 900px; top: 112px; height: 146px">
+        <div data-hf-id="hf-d2k6" class="glw"></div>
+        <div data-hf-id="hf-nl72" class="tt"><svg data-hf-id="hf-g54l" class="i" viewBox="0 0 24 24" stroke-width="2"><polyline data-hf-id="hf-o6zx" points="4 7 4 4 20 4 20 7" /><line data-hf-id="hf-uz1p" x1="12" x2="12" y1="4" y2="20" /></svg>System Prompt #2</div>
+        <div data-hf-id="hf-jjxl" class="tx">You are a social media manager. Create a tweet-length marketing post…</div>
+        <div data-hf-id="hf-wg0f" class="hd" style="left: 293px; top: 64px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-h0og" class="ok"><svg data-hf-id="hf-cjg5" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-njeo" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+      <div data-hf-id="hf-gus9" class="tile llmt" id="rn-c2" style="left: 1340px; top: 420px; width: 400px; height: 280px">
+        <div data-hf-id="hf-8p6v" class="glw"></div>
+        <div data-hf-id="hf-swg0" class="tt"><svg data-hf-id="hf-fqtk" class="i" viewBox="0 0 24 24" stroke-width="2"><path data-hf-id="hf-7jy3" d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /></svg>LLM #2</div>
+        <div data-hf-id="hf-80pv" class="sub">Final Post · 2 images</div>
+        <div data-hf-id="hf-apma" class="md">Gemini 3.5 Flash</div>
+        <div data-hf-id="hf-ptwv" class="st" id="rn-c2s0" style="color: #b4b3c0">waiting for both branches</div>
+        <div data-hf-id="hf-l4xa" class="st" id="rn-c2s1" style="color: #fbbf24; opacity: 0">branch B ready · waiting on A</div>
+        <div data-hf-id="hf-oktn" class="st" id="rn-c2s2" style="color: #f7ffa8; opacity: 0">running on Trigger.dev…</div>
+        <div data-hf-id="hf-l1d1" class="st" id="rn-c2s3" style="color: #34d399; opacity: 0">✓ post ready</div>
+        <div data-hf-id="hf-fh6l" class="hd" style="left: -8px; top: 55px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-id6f" class="hd" style="left: -8px; top: 105px; background: #f1a0fa"></div>
+        <div data-hf-id="hf-fe22" class="hd" style="left: -8px; top: 155px; background: #45a08a"></div>
+        <div data-hf-id="hf-xxo6" class="hd" style="left: -8px; top: 205px; background: #45a08a"></div>
+        <div data-hf-id="hf-b231" class="ok"><svg data-hf-id="hf-c554" class="i" viewBox="0 0 24 24" width="18" height="18" stroke-width="3.2"><path data-hf-id="hf-hkt9" d="M20 6 9 17l-5-5" /></svg></div>
+      </div>
+
+      <div data-hf-id="hf-n8pv" id="rn-name"><span data-hf-id="hf-9gry" class="dot"></span>Product Marketing Kit Generator</div>
+      <div data-hf-id="hf-uoln" id="rn-phase">
+        <span data-hf-id="hf-vd10">PHASE</span>
+        <div data-hf-id="hf-7zwr" class="p">1<div data-hf-id="hf-w3ci" class="on" id="rn-p1">1</div></div>
+        <div data-hf-id="hf-7llq" class="p">2<div data-hf-id="hf-5viy" class="on" id="rn-p2">2</div></div>
+        <div data-hf-id="hf-77ap" class="p">3<div data-hf-id="hf-rmky" class="on" id="rn-p3">3</div></div>
+        <div data-hf-id="hf-6szo" class="p">4<div data-hf-id="hf-d4pu" class="on" id="rn-p4">4</div></div>
+      </div>
+      <div data-hf-id="hf-7bup" id="rn-run">
+        <div data-hf-id="hf-au22" class="lb" id="rn-lb1"><svg data-hf-id="hf-o2gu" class="i" viewBox="0 0 24 24" width="20" height="20" stroke-width="2.4" style="fill: #1c1b1f"><polygon data-hf-id="hf-iq02" points="6 3 20 12 6 21 6 3" /></svg>Run Workflow</div>
+        <div data-hf-id="hf-kcp4" class="lb" id="rn-lb2"><svg data-hf-id="hf-3s66" id="rn-spin" class="i" viewBox="0 0 24 24" stroke-width="2.6"><path data-hf-id="hf-ppa5" d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>Running…</div>
+      </div>
+
+      <h3 data-hf-id="hf-mt72" class="cap" id="rn-cap1"><span data-hf-id="hf-m6sm" class="w">Independent</span><span data-hf-id="hf-wpak" class="w">branches</span><span data-hf-id="hf-bw6l" class="w">run</span><span data-hf-id="hf-ze0w" class="w acc">in</span><span data-hf-id="hf-ef1i" class="w acc">parallel.</span></h3>
+      <h3 data-hf-id="hf-iv31" class="cap" id="rn-cap2"><span data-hf-id="hf-4q4b" class="w">Every</span><span data-hf-id="hf-yfok" class="w">node</span><span data-hf-id="hf-fj2o" class="w">is</span><span data-hf-id="hf-b7a3" class="w">a</span><span data-hf-id="hf-p1y8" class="w acc">Trigger.dev</span><span data-hf-id="hf-ovec" class="w acc">task.</span></h3>
+
+      <svg data-hf-id="hf-8s49" id="rn-cursor" class="i" viewBox="0 0 24 24" stroke-width="1.4" style="fill: #ffffff; stroke: #08080a" data-layout-ignore><path data-hf-id="hf-xi1z" d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" /></svg>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // Camera pulls back onto the whole sample workflow.
+    tl.fromTo("#rn-stage", { scale: 1.45, opacity: 0, filter: "blur(12px)" }, { scale: 1, opacity: 1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 0);
+    tl.fromTo(".draw", { strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 0.5, ease: "power3.out", stagger: 0.08 }, 0.35);
+    tl.fromTo(".flow", { strokeDashoffset: 0 }, { strokeDashoffset: -260, duration: 10.91, ease: "none" }, 0);
+    // Cursor travels to Run Workflow and clicks on the beat (30.01 abs).
+    tl.fromTo("#rn-cursor", { x: 1500, y: 760, opacity: 0 }, { x: 1500, y: 760, opacity: 1, duration: 0.2 }, 0.8);
+    tl.to("#rn-cursor", { x: 1762, y: 62, duration: 1.1, ease: "power2.inOut" }, 1.0);
+    tl.to("#rn-cursor", { scale: 0.85, duration: 0.08, yoyo: true, repeat: 1 }, 2.14);
+    tl.to("#rn-run", { scale: 0.95, duration: 0.08, yoyo: true, repeat: 1 }, 2.14);
+    tl.to("#rn-lb1", { opacity: 0, duration: 0.12 }, 2.2);
+    tl.to("#rn-lb2", { opacity: 1, duration: 0.12 }, 2.2);
+    tl.fromTo("#rn-spin", { rotation: 0 }, { rotation: 360 * 9, duration: 6.8, ease: "none" }, 2.2);
+    tl.to("#rn-cursor", { x: 1820, y: 220, opacity: 0, duration: 0.5, ease: "power2.in" }, 2.5);
+
+    // Pulsating glow while a node executes: rise, pulse on the half-beat, settle to a check.
+    function runNode(id, t, len) {
+      tl.fromTo(id + " .glw", { opacity: 0 }, { opacity: 1, duration: 0.15, ease: "power2.out" }, t);
+      const pulses = Math.max(1, Math.round((len - 0.35) / 0.545));
+      tl.fromTo(id + " .glw", { opacity: 1 }, { opacity: 0.35, duration: 0.2725, ease: "sine.inOut", yoyo: true, repeat: pulses * 2 - 1, immediateRender: false }, t + 0.15);
+      tl.to(id + " .glw", { opacity: 0, duration: 0.2, ease: "power2.out" }, t + len);
+      tl.fromTo(id + " .ok", { opacity: 0, scale: 0.3 }, { opacity: 1, scale: 1, duration: 0.3, ease: "expo.out" }, t + len);
+    }
+    function phase(n, t) {
+      tl.fromTo("#rn-p" + n, { opacity: 0 }, { opacity: 1, duration: 0.15 }, t);
+    }
+    function flow(ids, t) {
+      tl.fromTo(ids.map((n) => "#rn-f" + n), { opacity: 0 }, { opacity: 1, duration: 0.3 }, t);
+    }
+    // Phase 1 — every root node in both branches at once (30.01 abs).
+    phase(1, 2.18);
+    ["#rn-a1", "#rn-a3", "#rn-a4", "#rn-b1", "#rn-c1"].forEach((id) => runNode(id, 2.18, 1.35));
+    flow([1, 2, 3, 5, 6], 3.53);
+    // Phase 2 — Crop and Extract Frame in parallel (31.65 abs).
+    phase(2, 3.82);
+    ["#rn-a2", "#rn-b2"].forEach((id) => runNode(id, 3.82, 1.35));
+    flow([4, 8, 9], 5.17);
+    tl.to("#rn-c2s0", { opacity: 0, duration: 0.15 }, 5.17);
+    tl.to("#rn-c2s1", { opacity: 1, duration: 0.15 }, 5.2);
+    // Phase 3 — LLM #1 (33.29 abs); the convergence node waits.
+    phase(3, 5.46);
+    runNode("#rn-a5", 5.46, 1.45);
+    tl.to("#rn-a5s0", { opacity: 0, duration: 0.15 }, 5.46);
+    tl.to("#rn-a5s1", { opacity: 1, duration: 0.15 }, 5.48);
+    tl.to("#rn-a5s1", { opacity: 0, duration: 0.15 }, 6.91);
+    tl.to("#rn-a5s2", { opacity: 1, duration: 0.15 }, 6.93);
+    flow([7], 6.91);
+    // Phase 4 — LLM #2 fires only when both branches are in (34.92 abs).
+    phase(4, 7.09);
+    runNode("#rn-c2", 7.09, 1.86);
+    tl.to("#rn-c2s1", { opacity: 0, duration: 0.15 }, 7.09);
+    tl.to("#rn-c2s2", { opacity: 1, duration: 0.15 }, 7.11);
+    tl.to("#rn-c2s2", { opacity: 0, duration: 0.15 }, 8.95);
+    tl.to("#rn-c2s3", { opacity: 1, duration: 0.15 }, 8.97);
+    tl.to("#rn-lb2", { opacity: 0, duration: 0.12 }, 9.0);
+    tl.to("#rn-lb1", { opacity: 1, duration: 0.12 }, 9.0);
+
+    // Captions.
+    tl.fromTo("#rn-cap1 .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.08 }, 2.45);
+    tl.to("#rn-cap1", { opacity: 0, filter: "blur(10px)", duration: 0.18, ease: "power2.in" }, 6.25);
+    tl.fromTo("#rn-cap2 .w", { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: 0.15, ease: "power4.out", stagger: 0.08 }, 6.5);
+    tl.to("#rn-cap2", { opacity: 0, filter: "blur(10px)", duration: 0.18, ease: "power2.in" }, 9.9);
+
+    // Dive into LLM #2.
+    tl.to("#rn-stage", { scale: 2.5, transformOrigin: "1540px 560px", filter: "blur(12px)", duration: 0.8, ease: "power3.in" }, 10.08);
+    tl.to("#rn-stage", { opacity: 0, duration: 0.14, ease: "none" }, 10.76);
+    window.__timelines["run"] = tl;
+  </script>
+</template>
